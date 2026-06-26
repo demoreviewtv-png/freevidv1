@@ -3,13 +3,14 @@ header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json");
 
 // Configuration
-$dir = "./videos/"; 
 $views_file = "VIEWS.txt";
 $ips_file = "DO NOT OPEN!!!.txt";
 $cooldown_seconds = 300; // 5 minute anti-spam
 
+// 🌐 GitHub API Configuration for tracking files
+$github_api_url = "https://api.github.com/repos/demoreviewtv-png/FREEVID-Vidstorage/contents/videos";
+
 function get_user_ip() {
-    // Wasmer Edge reliably populates standard proxy headers
     if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
         $ip_list = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']);
         return trim($ip_list[0]);
@@ -18,9 +19,7 @@ function get_user_ip() {
 }
 
 function read_json_database($file) {
-    if (!file_exists($file)) {
-        return array();
-    }
+    if (!file_exists($file)) return array();
     $content = @file_get_contents($file);
     $data = json_decode($content, true);
     return is_array($data) ? $data : array();
@@ -63,33 +62,33 @@ if ($action === 'increment' && isset($_GET['file'])) {
         $ip_log[$user_ip][$video_file] = $current_time;
     }
 
-    foreach ($ip_log as $ip => $videos) {
-        foreach ($videos as $vid => $timestamp) {
-            if (($current_time - $timestamp) > 86400) {
-                unset($ip_log[$ip][$vid]);
-            }
-        }
-        if (empty($ip_log[$ip])) { unset($ip_log[$ip]); }
-    }
-    save_json_database($ips_file, $ip_log);
-
-    echo json_encode(array(
-        "views" => $views[$video_file],
-        "spammed" => !$can_count_view
-    ));
+    echo json_encode(array("views" => $views[$video_file], "spammed" => !$can_count_view));
     exit;
 }
 
-// Map the workspace directory to scan files accurately inside the container
+// 📦 Fetch the file list dynamically from the GitHub Repository API
 $video_files = array();
-if (is_dir($dir)) {
-    if ($dh = opendir($dir)) {
-        while (($file = readdir($dh)) !== false) {
-            if (preg_match('/\.(mp4|webm|mkv|avi)$/i', $file)) {
-                $video_files[] = $file;
+
+$opts = [
+    "http" => [
+        "method" => "GET",
+        "header" => "User-Agent: WasmerPHP-App\r\n" // GitHub API requires a User-Agent header
+    ]
+];
+$context = stream_context_create($opts);
+$response = @file_get_contents($github_api_url, false, $context);
+
+if ($response) {
+    $repo_contents = json_decode($response, true);
+    if (is_array($repo_contents)) {
+        foreach ($repo_contents as $item) {
+            // Filter out files that match common video extension formats
+            if (isset($item['type']) && $item['type'] === 'file') {
+                if (preg_match('/\.(mp4|webm|mkv|avi)$/i', $item['name'])) {
+                    $video_files[] = $item['name'];
+                }
             }
         }
-        closedir($dh);
     }
 }
 
