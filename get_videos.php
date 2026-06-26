@@ -66,17 +66,19 @@ if ($action === 'increment' && isset($_GET['file'])) {
     exit;
 }
 
-// 📦 Fetch the file list dynamically from the GitHub Repository API
+// 📦 Fetch the file list dynamically from the GitHub Repository API using cURL
 $video_files = array();
 
-$opts = [
-    "http" => [
-        "method" => "GET",
-        "header" => "User-Agent: WasmerPHP-App\r\n" // GitHub API requires a User-Agent header
-    ]
-];
-$context = stream_context_create($opts);
-$response = @file_get_contents($github_api_url, false, $context);
+$ch = curl_init();
+curl_setopt($ch, CURLOPT_URL, $github_api_url);
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+// GitHub API strictly requires a User-Agent header, otherwise it blocks the request
+curl_setopt($ch, CURLOPT_HTTPHEADER, array('User-Agent: WasmerPHP-App'));
+curl_setopt($ch, CURLOPT_TIMEOUT, 10); 
+curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // Prevents SSL failure inside the container
+
+$response = curl_exec($ch);
+curl_close($ch);
 
 if ($response) {
     $repo_contents = json_decode($response, true);
