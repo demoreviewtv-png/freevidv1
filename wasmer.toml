@@ -1,0 +1,25 @@
+[package]
+name = "demoreviewtv-png/freevid"
+version = "0.1.0"
+description = "Freevid website with PHP backend and HTML frontend running on Wasmer Edge"
+
+[[modules]]
+name = "php"
+source = "wasmer/php:8.2"
+
+[[volumes]]
+name = "web"
+path = "."
+
+[[apps]]
+name = "freevid"
+
+[[apps.routes]]
+path = "/get_videos.php"
+module = "php"
+# Routes your backend request through the WebAssembly PHP engine
+
+[[apps.routes]]
+path = "/"
+static = "."
+# Automatically serves index.html, CSS, video folders, and thumbnails
