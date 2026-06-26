@@ -1,0 +1,789 @@
+<a href="HTTPS://Freevid.page.gd/">Go BAAAAAAAAAACK</a>
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>FREEVID!!</title>
+    <style>
+        body { font-family: Arial, sans-serif; display: flex; flex-direction: column; align-items: center; padding: 20px; background: #f4f4f9; }
+        .search-container { position: relative; width: 100%; max-width: 600px; margin-bottom: 15px; }
+        input { width: 100%; padding: 12px; font-size: 16px; box-sizing: border-box; border: 2px solid #ccc; border-radius: 4px; }
+        .results { position: absolute; width: 100%; background: white; border: 1px solid #ccc; max-height: 200px; overflow-y: auto; z-index: 10; display: none; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .results div { padding: 10px; cursor: pointer; }
+        .results div:hover { background: #eee; }
+        
+        /* 🎛️ NAVIGATION BAR / TOP LINKS WRAPPER */
+        .top-nav {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        /* 🟣 GOOGLE FORMS BUTTON STYLING */
+        .forms-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background-color: #7248b9;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            font-size: 15px;
+            font-weight: bold;
+            border-radius: 4px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            transition: background 0.2s ease, transform 0.1s ease;
+        }
+        .forms-btn:hover { background-color: #5b379b; }
+        .forms-btn:active { transform: scale(0.98); }
+        .forms-icon { width: 18px; height: 18px; }
+
+        /* ℹ️ ABOUT SITE BUTTON STYLING */
+        .about-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background-color: #17a2b8;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 15px;
+            font-weight: bold;
+            border-radius: 4px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            cursor: pointer;
+            transition: background 0.2s ease, transform 0.1s ease;
+        }
+        .about-btn:hover { background-color: #138496; }
+        .about-btn:active { transform: scale(0.98); }
+
+        /* FIXED VIDEO PLAYER STYLING */
+        .video-wrapper {
+            width: 100%;
+            max-width: 800px;
+            background: #000;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            overflow: hidden;
+            display: none; /* 🔴 Hidden by default until a video is clicked */
+            justify-content: center;
+            align-items: center;
+        }
+        video { 
+            width: 100%; 
+            max-height: 70vh; 
+            background: black; 
+            object-fit: contain; 
+            display: block;
+        }
+        
+        /* 🏷️ META INFO STYLING */
+        .info-container {
+            margin-top: 15px;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+        .status-msg { margin: 0; color: #333; font-weight: bold; font-size: 18px; }
+        .view-count-display { margin: 5px 0 0 0; color: #666; font-size: 14px; font-weight: normal; }
+
+        /* 🎛️ ACTION BUTTONS WRAPPER */
+        .actions-wrapper {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        /* 📥 DOWNLOAD BUTTON STYLING */
+        .download-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background-color: #007BFF;
+            color: white;
+            text-decoration: none;
+            padding: 8px 16px;
+            font-size: 14px;
+            font-weight: bold;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: background 0.2s ease;
+            display: none; 
+        }
+        .download-btn:hover { background-color: #0056b3; }
+        
+        /* 🔄 AUTOLOOP BUTTON STYLING */
+        .loop-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            font-size: 14px;
+            font-weight: bold;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: background 0.2s ease;
+            display: none;
+        }
+        .loop-btn.active { background-color: #28a745; }
+        .loop-btn.active:hover { background-color: #218838; }
+        .loop-btn:not(.active):hover { background-color: #5a6268; }
+
+        /* ↩️ GO BACK BUTTON STYLING */
+        .reset-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            font-size: 14px;
+            font-weight: bold;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: background 0.2s ease;
+            display: none; 
+        }
+        .reset-btn:hover { background-color: #5a6268; }
+        .btn-icon { width: 16px; height: 16px; }
+
+        /* 🎲 REROLL BUTTON STYLING */
+        .reroll-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            font-size: 13px;
+            font-weight: bold;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+        .reroll-btn:hover { background-color: #0056b3; }
+
+        /* 📄 GRID & CARD WORKFLOW DESIGN */
+        .creator-section {
+            width: 100%;
+            max-width: 800px;
+            margin-top: 20px;
+        }
+        .section-header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #ccc;
+            padding-bottom: 8px;
+            margin-bottom: 15px;
+        }
+        .creator-section h2 {
+            font-size: 18px;
+            color: #444;
+            margin: 0;
+            border: none;
+            padding: 0;
+        }
+        .thumbnail-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 15px;
+            width: 100%;
+        }
+        .video-card {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            overflow: hidden;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            transition: transform 0.2s, border-color 0.2s;
+        }
+        .video-card:hover {
+            transform: translateY(-3px);
+            border-color: #007BFF;
+        }
+        .thumb-preview {
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            background: #000;
+            overflow: hidden;
+        }
+        .thumb-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .card-details {
+            padding: 10px;
+        }
+        .card-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: #333;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+        }
+        .card-title .title-duration {
+            font-weight: normal;
+            color: #777;
+            font-family: monospace;
+            font-size: 12px;
+            background: #eee;
+            padding: 2px 5px;
+            border-radius: 3px;
+            margin-right: 8px;
+            flex-shrink: 0;
+        }
+        .card-creator {
+            font-size: 12px;
+            color: #666;
+            margin-top: 4px;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            overflow: hidden;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .card-views {
+            font-size: 11px;
+            color: #888;
+            background: #f0f0f0;
+            padding: 1px 6px;
+            border-radius: 10px;
+        }
+
+        /* 📦 MODAL OVERLAY STYLING */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        .modal-overlay.open {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            text-align: left;
+            position: relative;
+        }
+        .modal-content h2 { margin-top: 0; color: #333; }
+        .modal-content p { color: #555; line-height: 1.6; }
+        .close-modal-btn {
+            margin-top: 20px;
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.2s;
+            float: right;
+        }
+        .close-modal-btn:hover { background-color: #5a6268; }
+    </style>
+</head>
+<body>
+
+    <h1>@DemoReviewTv And @The Red Guy's New Shiny Website!!</h1>
+
+    <div class="search-container">
+        <input type="text" id="search" placeholder="Search This Tiny Server!" disabled oninput="filterVideos()">
+        <div id="results" class="results"></div>
+    </div>
+
+    <div class="top-nav">
+        <a href="https://forms.gle/FEpwiv7j2uGquxbY9" target="_blank" class="forms-btn">
+            <svg class="forms-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M19 3H5C3.9 3 3 3.9 3 5V19C3 20.1 3.9 21 5 21H19C20.1 21 21 20.1 21 19V5C21 3.9 20.1 3 19 3ZM11 7H17V9H11V7ZM11 11H17V13H11V11ZM11 15H17V17H11V15ZM7 7H9V9H7V7ZM7 11H9V13H7V11ZM7 15H9V17H7V15Z" fill="currentColor"/>
+            </svg>
+            Upload Video!
+        </a>
+
+        <a href="https://forms.gle/fiyaRZ3CMZSGi5JQ7" target="_blank" class="forms-btn">
+            <svg class="forms-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M19 3H5C3.9 3 3 3.9 3 5V19C3 20.1 3.9 21 5 21H19C20.1 21 21 20.1 21 19V5C21 3.9 20.1 3 19 3ZM11 7H17V9H11V7ZM11 11H17V13H11V11ZM11 15H17V17H11V15ZM7 7H9V9H7V7ZM7 11H9V13H7V11ZM7 15H9V17H7V15Z" fill="currentColor"/>
+            </svg>
+            Change Your Username.
+        </a>
+
+        <button class="about-btn" onclick="openAboutModal()">
+            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" fill="currentColor"/>
+            </svg>
+            About This Site
+        </button>
+    </div>
+
+    <div id="videoWrapper" class="video-wrapper">
+        <video id="player" controls autoplay controlsList="nodownload" disablePictureInPicture oncontextmenu="return false;"></video>
+    </div>
+    
+    <div class="info-container">
+        <p class="status-msg" id="status">Search The (Small) Server!</p>
+        <p class="view-count-display" id="viewCountDisplay" style="display: none;"></p>
+    </div>
+
+    <div class="actions-wrapper">
+        <a id="downloadBtn" href="#" download class="download-btn">
+            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M5 20H19V18H5V20ZM19 9H15V3H9V9H5L12 16L19 9Z" fill="currentColor"/>
+            </svg>
+            Download Video
+        </a>
+
+        <button id="loopBtn" class="loop-btn" onclick="toggleLoop()">
+            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M19 8l-4 4h3c0 3.31-2.69 6-6 6-1.01 0-1.97-.25-2.8-.7l-1.46 1.46C8.97 19.54 10.43 20 12 20c4.42 0 8-3.58 8-8h3l-4-4zM6 12c0-3.31 2.69-6 6-6 1.01 0 1.97.25 2.8.7l1.46-1.46C15.03 4.46 13.57 4 12 4c-4.42 0-8 3.58-8 8H1l4 4 4-4H6z" fill="currentColor"/>
+            </svg>
+            <span id="loopText">Looping: OFF</span>
+        </button>
+
+        <button id="resetBtn" class="reset-btn" onclick="resetPlayer()">
+            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12.5 8c-2.65 0-5.05 1-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z" fill="currentColor"/>
+            </svg>
+            Go Back
+        </button>
+    </div>
+
+    <div id="creatorSection" class="creator-section">
+        <div class="section-header-container">
+            <h2 id="creatorHeader">Discover Videos</h2>
+            <button id="rerollBtn" class="reroll-btn" onclick="showRandomVideos()">
+                <svg class="btn-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z" fill="currentColor"/>
+                </svg>
+                Reroll
+            </button>
+        </div>
+        <div id="thumbnailGrid" class="thumbnail-grid"></div>
+    </div>
+
+    <div id="aboutModal" class="modal-overlay" onclick="closeAboutModal(event)">
+        <div class="modal-content">
+            <h2>About FREEVID!!</h2>
+            <hr style="border: 0; border-top: 1px solid #eee; margin-bottom: 15px;">
+            <p><a href="https://freevid.page.gd/ABOUTUS">Click here for the site.</a></p>
+            <button class="close-modal-btn" onclick="document.getElementById('aboutModal').classList.remove('open')">Close</button>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = "get_videos.php";
+        const VIDEO_FOLDER = "videos/";
+        const THUMBNAIL_FOLDER = "videos/thumbnails/";
+
+        let serverVideos = [];
+        let currentlyPlayingTitle = "";
+        let cachedViews = {};
+
+        async function fetchAllViews() {
+            try {
+                const response = await fetch(`${API_URL}?action=get_views`);
+                cachedViews = await response.json();
+            } catch (err) {
+                console.error("Error fetching views from text database:", err);
+            }
+        }
+
+        function getVideoViews(filename) {
+            return cachedViews[filename] || 0;
+        }
+
+        async function incrementVideoViews(filename, viewDisplayElement) {
+            try {
+                const response = await fetch(`${API_URL}?action=increment&file=${encodeURIComponent(filename)}`);
+                const data = await response.json();
+                
+                cachedViews[filename] = data.views;
+                
+                if (viewDisplayElement) {
+                    if (data.spammed) {
+                        console.log("View count rate-limited (cooldown active for your IP)");
+                    }
+                    viewDisplayElement.textContent = `🔥 ${data.views.toLocaleString()} views`;
+                }
+            } catch (err) {
+                console.error("Error saving view count:", err);
+            }
+        }
+
+        function formatDuration(seconds) {
+            if (isNaN(seconds) || seconds === Infinity || seconds <= 0) return "";
+            const hrs = Math.floor(seconds / 3600);
+            const mins = Math.floor((seconds % 3600) / 60);
+            const secs = Math.floor(seconds % 60);
+            
+            if (hrs > 0) {
+                return `${hrs}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            }
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function getCleanName(filename) {
+            return filename.replace(/\.[^/.]+$/, "")
+                           .replace("[Downloadable]", "")
+                           .replace("[AutoLoop]", "")
+                           .replace(/\b\d{1,2}:\d{2}(?::\d{2})?\b/g, "")
+                           .replace(/\[.*?\]/g, "")
+                           .replace(/\s+/g, " ")
+                           .trim();
+        }
+
+        function parseVideoMeta(filename) {
+            const cleanName = getCleanName(filename);
+            if (cleanName.includes(" - ")) {
+                const parts = cleanName.split(" - ");
+                return {
+                    title: parts[0].trim(),
+                    creator: parts[1].trim()
+                };
+            }
+            return { title: cleanName, creator: "Unknown Creator" };
+        }
+
+        async function fetchVideoList() {
+            const status = document.getElementById('status');
+            const searchInput = document.getElementById('search');
+
+            try {
+                await fetchAllViews();
+
+                const response = await fetch(API_URL);
+                serverVideos = await response.json();
+
+                if (serverVideos.length > 0) {
+                    setLibraryReadyStatus();
+                    searchInput.disabled = false;
+                    showRandomVideos();
+                } else {
+                    status.textContent = "Connected to server, but the 'videos' folder is empty.";
+                }
+            } catch (err) {
+                console.error("Error fetching library:", err);
+                status.textContent = "Failed to load video list from server.";
+            }
+        }
+
+        function setLibraryReadyStatus() {
+            document.getElementById('status').textContent = `Successfully synced! (${serverVideos.length} videos found)`;
+            document.getElementById('viewCountDisplay').style.display = "none";
+        }
+
+        function selectVideo(video) {
+            const meta = parseVideoMeta(video);
+            const videoSrc = VIDEO_FOLDER + encodeURIComponent(video);
+            const dlBtn = document.getElementById('downloadBtn');
+            const loopBtn = document.getElementById('loopBtn');
+            const resetBtn = document.getElementById('resetBtn');
+            const player = document.getElementById('player');
+            const videoWrapper = document.getElementById('videoWrapper');
+            const viewDisplay = document.getElementById('viewCountDisplay');
+
+            const localEstimate = getVideoViews(video) + 1;
+            viewDisplay.textContent = `🔥 ${localEstimate.toLocaleString()} views`;
+            viewDisplay.style.display = "block";
+            incrementVideoViews(video, viewDisplay);
+
+            currentlyPlayingTitle = meta.title;
+            player.src = videoSrc;
+            
+            videoWrapper.style.display = "flex";
+            
+            document.getElementById('search').value = meta.title;
+            document.getElementById('status').textContent = "Now playing: " + meta.title;
+            
+            if (video.includes("[AutoLoop]")) {
+                player.loop = true;
+                loopBtn.classList.add('active');
+                document.getElementById('loopText').textContent = "Looping: ON";
+            } else {
+                player.loop = false;
+                loopBtn.classList.remove('active');
+                document.getElementById('loopText').textContent = "Looping: OFF";
+            }
+
+            loopBtn.style.display = "inline-flex";
+
+            if (video.includes("[Downloadable]")) {
+                dlBtn.href = videoSrc;
+                dlBtn.setAttribute("download", video);
+                dlBtn.style.display = "inline-flex";
+            } else {
+                dlBtn.style.display = "none"; 
+            }
+            
+            resetBtn.style.display = "inline-flex";
+
+            if (meta.creator && meta.creator !== "Unknown Creator") {
+                showCreatorGrid(meta.creator);
+            } else {
+                showRandomVideos(); 
+            }
+        }
+
+        document.getElementById('player').addEventListener('loadedmetadata', function() {
+            const trueDuration = formatDuration(this.duration);
+            if (trueDuration && currentlyPlayingTitle) {
+                const fullDisplay = `[${trueDuration}] ${currentlyPlayingTitle}`;
+                document.getElementById('search').value = fullDisplay;
+                document.getElementById('status').textContent = "Now playing: " + fullDisplay;
+            }
+        });
+
+        function toggleLoop() {
+            const player = document.getElementById('player');
+            const loopBtn = document.getElementById('loopBtn');
+            const loopText = document.getElementById('loopText');
+
+            if (player.src) {
+                player.loop = !player.loop;
+                if (player.loop) {
+                    loopBtn.classList.add('active');
+                    loopText.textContent = "Looping: ON";
+                } else {
+                    loopBtn.classList.remove('active');
+                    loopText.textContent = "Looping: OFF";
+                }
+            }
+        }
+
+        function showRandomVideos() {
+            const header = document.getElementById('creatorHeader');
+            header.textContent = "Discover Videos";
+            
+            const shuffled = [...serverVideos].sort(() => 0.5 - Math.random());
+            // 🛠️ CHANGED: Slice target adjusted from 10 down to 9
+            const randomNine = shuffled.slice(0, 9);
+
+            buildGridCards(randomNine);
+        }
+
+        function showCreatorGrid(creatorName) {
+            const header = document.getElementById('creatorHeader');
+            header.textContent = `More Videos From: ${creatorName}`;
+
+            const matches = serverVideos.filter(video => {
+                const meta = parseVideoMeta(video);
+                return meta.creator && meta.creator.toLowerCase() === creatorName.toLowerCase();
+            });
+
+            buildGridCards(matches);
+        }
+
+        function buildGridCards(videoList) {
+            const grid = document.getElementById('thumbnailGrid');
+            grid.innerHTML = ""; 
+
+            videoList.forEach(video => {
+                const meta = parseVideoMeta(video);
+                const videoSrc = VIDEO_FOLDER + encodeURIComponent(video);
+                const views = getVideoViews(video);
+                
+                const baseName = video.replace(/\.[^/.]+$/, "");
+                const customThumbnailSrc = `${THUMBNAIL_FOLDER}${encodeURIComponent(baseName)}.jpg`;
+                const defaultThumbnailSrc = `${THUMBNAIL_FOLDER}DEFAULT-THUMBNAIL.png`;
+
+                const card = document.createElement('div');
+                card.className = "video-card";
+                card.onclick = () => {
+                    selectVideo(video);
+                    window.scrollTo({ top: 0, behavior: 'smooth' }); 
+                };
+
+                const previewDiv = document.createElement('div');
+                previewDiv.className = "thumb-preview";
+                
+                const thumbImage = document.createElement('img');
+                thumbImage.src = customThumbnailSrc;
+                thumbImage.alt = meta.title;
+
+                thumbImage.onerror = function() {
+                    if (this.src.endsWith('.jpg')) {
+                        this.src = `${THUMBNAIL_FOLDER}${encodeURIComponent(baseName)}.png`;
+                    } else if (this.src.endsWith('.png') && !this.src.includes('DEFAULT-THUMBNAIL')) {
+                        this.src = defaultThumbnailSrc;
+                    } else {
+                        this.style.background = "#222";
+                        this.onerror = null; 
+                    }
+                };
+
+                previewDiv.appendChild(thumbImage);
+
+                const hiddenMetaVideo = document.createElement('video');
+                hiddenMetaVideo.src = videoSrc + "#t=0.1";
+                hiddenMetaVideo.preload = "metadata";
+                hiddenMetaVideo.muted = true;
+
+                const detailsDiv = document.createElement('div');
+                detailsDiv.className = "card-details";
+
+                const titleDiv = document.createElement('div');
+                titleDiv.className = "card-title";
+
+                hiddenMetaVideo.addEventListener('loadedmetadata', function() {
+                    const trueDuration = formatDuration(this.duration);
+                    if (trueDuration) {
+                        const durationSpan = document.createElement('span');
+                        durationSpan.className = "title-duration";
+                        durationSpan.textContent = trueDuration;
+                        titleDiv.insertBefore(durationSpan, titleDiv.firstChild);
+                    }
+                });
+                
+                const titleTextSpan = document.createElement('span');
+                titleTextSpan.textContent = meta.title;
+                titleDiv.appendChild(titleTextSpan);
+
+                const creatorDiv = document.createElement('div');
+                creatorDiv.className = "card-creator";
+                
+                const creatorTextSpan = document.createElement('span');
+                creatorTextSpan.textContent = meta.creator;
+                
+                const viewsSpan = document.createElement('span');
+                viewsSpan.className = "card-views";
+                viewsSpan.textContent = `${views} views`;
+
+                creatorDiv.appendChild(creatorTextSpan);
+                creatorDiv.appendChild(viewsSpan);
+
+                detailsDiv.appendChild(titleDiv);
+                detailsDiv.appendChild(creatorDiv);
+                
+                card.appendChild(previewDiv);
+                card.appendChild(detailsDiv);
+                grid.appendChild(card);
+            });
+        }
+
+        function filterVideos() {
+            const query = document.getElementById('search').value.toLowerCase();
+            const box = document.getElementById('results');
+            box.innerHTML = "";
+
+            if (!query) { box.style.display = "none"; return; }
+
+            const matches = serverVideos.filter(video => {
+                const cleanName = getCleanName(video).toLowerCase();
+                return cleanName.includes(query) || video.toLowerCase().includes(query);
+            });
+
+            if (matches.length > 0) {
+                box.style.display = "block";
+                matches.forEach(video => {
+                    const meta = parseVideoMeta(video);
+                    const div = document.createElement('div');
+                    
+                    div.textContent = meta.creator !== "Unknown Creator" ? `${meta.title} (by ${meta.creator})` : meta.title;
+                    div.onclick = () => {
+                        selectVideo(video);
+                        box.style.display = "none";
+                    };
+                    box.appendChild(div);
+                });
+            } else {
+                box.style.display = "none";
+            }
+        }
+
+        function resetPlayer() {
+            const player = document.getElementById('player');
+            const videoWrapper = document.getElementById('videoWrapper');
+            
+            player.removeAttribute('src'); 
+            player.loop = false; 
+            player.load(); 
+
+            videoWrapper.style.display = "none";
+
+            currentlyPlayingTitle = "";
+            document.getElementById('search').value = "";
+            setLibraryReadyStatus();
+
+            document.getElementById('downloadBtn').style.display = "none";
+            document.getElementById('loopBtn').style.display = "none";
+            document.getElementById('resetBtn').style.display = "none";
+            showRandomVideos(); 
+        }
+
+        function openAboutModal() {
+            document.getElementById('aboutModal').classList.add('open');
+        }
+        function closeAboutModal(e) {
+            if (e.target.id === 'aboutModal') {
+                document.getElementById('aboutModal').classList.remove('open');
+            }
+        }
+
+        document.addEventListener('click', (e) => {
+            if (e.target.id !== 'search') document.getElementById('results').style.display = "none";
+        });
+
+        document.getElementById('search').addEventListener('click', () => {
+            if(document.getElementById('search').value !== "") {
+                filterVideos();
+            }
+        });
+
+        // ⏱️ AUTO-REFRESH LOGIC: Runs every 60 seconds (1 minute)
+        setInterval(async () => {
+            const player = document.getElementById('player');
+            
+            if (!player.src || (player.paused && player.readyState !== 1 && player.readyState !== 2 && !player.seeking)) {
+                try {
+                    await fetchAllViews();
+                    const response = await fetch(API_URL);
+                    const updatedVideos = await response.json();
+                    
+                    if (updatedVideos.length > 0) {
+                        serverVideos = updatedVideos;
+                        document.getElementById('search').disabled = false;
+                        
+                        const headerText = document.getElementById('creatorHeader').textContent;
+                        if (headerText.includes("More Videos From:")) {
+                            const creatorName = headerText.replace("More Videos From: ", "").trim();
+                            showCreatorGrid(creatorName);
+                        } else {
+                            showRandomVideos();
+                        }
+                    }
+                } catch (err) {
+                    console.error("Background sync failed:", err);
+                }
+            }
+        }, 60000);
+
+        fetchVideoList();
+    </script>
+</body>
+</html>
