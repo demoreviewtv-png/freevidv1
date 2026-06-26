@@ -6,5 +6,5 @@ This Is The Github Repository Responible For Holding All The Stuff Of FREEVID, I
 
 So, Up Next Is Update Versions And Notes.
 
-V1.0.0 - Set Up On "Render.com"
+V1.0.0 - Set Up On "Render.com" // 
 No Notes
