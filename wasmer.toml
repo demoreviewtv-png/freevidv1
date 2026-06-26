@@ -1,5 +1,5 @@
 [package]
-name = "demoreviewtv-png/freevid"
+name = "your-username/freevid"
 version = "0.1.0"
 description = "Freevid website with PHP backend and HTML frontend running on Wasmer Edge"
 
@@ -14,12 +14,13 @@ path = "."
 [[apps]]
 name = "freevid"
 
+# 🟢 CRITICAL: Add this line to allow your PHP backend to talk to GitHub
+allow-net = true
+
 [[apps.routes]]
 path = "/get_videos.php"
 module = "php"
-# Routes your backend request through the WebAssembly PHP engine
 
 [[apps.routes]]
 path = "/"
 static = "."
-# Automatically serves index.html, CSS, video folders, and thumbnails
