@@ -107,7 +107,7 @@
     </div>
     
     <div class="info-container">
-        <p class="status-msg" id="status">Syncing with GitHub storage...</p>
+        <p class="status-msg" id="status">Syncing directly with GitHub storage...</p>
     </div>
 
     <div class="actions-wrapper">
@@ -133,7 +133,7 @@
     </div>
 
     <script>
-        // 🌐 Directly talks to your public storage repo via GitHub APIs! No PHP server needed.
+        // 🌐 Connects straight to your public video repo folder via GitHub's API!
         const GITHUB_API_URL = "https://api.github.com/repos/demoreviewtv-png/FREEVID-Vidstorage/contents/videos";
         const VIDEO_FOLDER = "https://raw.githubusercontent.com/demoreviewtv-png/FREEVID-Vidstorage/main/videos/";
         const THUMBNAIL_FOLDER = "https://raw.githubusercontent.com/demoreviewtv-png/FREEVID-Vidstorage/main/videos/thumbnails/";
@@ -178,10 +178,10 @@
                     searchInput.disabled = false;
                     showRandomVideos();
                 } else {
-                    status.textContent = "Connected to storage, but no videos found.";
+                    status.textContent = "Connected to storage, but no videos found inside /videos.";
                 }
             } catch (err) {
-                status.textContent = "Failed to load video list from GitHub Storage. Make sure the storage repo is public!";
+                status.textContent = "Error: Couldn't read GitHub storage. Make sure the FREEVID-Vidstorage repo is PUBLIC!";
             }
         }
 
