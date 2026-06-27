@@ -217,9 +217,9 @@
             throw new Error("Execution suspended due to rapid reloads.");
         }
 
-        const GITHUB_API_URL = "https://api.github.com/repos/demoreviewtv-png/FREEVID-Vidstorage/contents/videos";
-        const VIDEO_FOLDER = "https://raw.githubusercontent.com/demoreviewtv-png/FREEVID-Vidstorage/videos/videos/";
-        const THUMBNAIL_FOLDER = "https://raw.githubusercontent.com/demoreviewtv-png/FREEVID-Vidstorage/videos/videos/thumbnails/";
+        const GITHUB_API_URL = "https://api.github.com/repos/demoreviewtv-png/freevidv1/contents/videos?ref=Videos";
+        const VIDEO_FOLDER = "https://raw.githubusercontent.com/demoreviewtv-png/freevidv1/Videos/videos/";
+        const THUMBNAIL_FOLDER = "https://raw.githubusercontent.com/demoreviewtv-png/freevidv1/Videos/videos/thumbnails/";
 
         let serverVideos = [];
         let currentlyPlayingTitle = "";
@@ -232,7 +232,6 @@
             return hrs > 0 ? `${hrs}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}` : `${mins}:${secs.toString().padStart(2, '0')}`;
         }
 
-        // Expanded cleanup handles timestamps and brackets correctly safely
         function getCleanName(filename) {
             return filename.replace(/\.[^/.]+$/, "").replace("[Downloadable]", "").replace("[AutoLoop]", "").replace(/\b\d{1,2}:\d{2}(?::\d{2})?\b/g, "").replace(/\[.*?\]/g, "").replace(/\s+/g, " ").trim();
         }
@@ -265,7 +264,7 @@
                     status.textContent = "Connected to storage, but no videos found inside /videos.";
                 }
             } catch (err) {
-                status.textContent = "Error: Couldn't read GitHub storage. Make sure the FREEVID-Vidstorage repo is PUBLIC!";
+                status.textContent = "Error: Couldn't read GitHub storage. Make sure the freevidv1 repo is PUBLIC!";
             }
         }
 
