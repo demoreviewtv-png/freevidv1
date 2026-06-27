@@ -1,5 +1,7 @@
 # freevidv1
 
+## https://freevid-v1.netlify.app
+
 HELLO AND WELCOME!
 
 This Is The Github Repository Responible For Holding All The Stuff Of FREEVID, Including Version Numbers, Update Notes, Etc
@@ -11,3 +13,6 @@ No Notes
 
 V1.1.0 - Set Up On "Wasmer.io" Replacing "Render.com" //
 Render Was Too Complicated >:[
+
+V1.1.1 - Fixed Site To Connect To This Repository In THe "Videos" Branch //
+No Notes
