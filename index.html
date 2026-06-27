@@ -20,6 +20,7 @@
             box-shadow: 0 2px 5px rgba(0,0,0,0.2); transition: background 0.2s ease, transform 0.1s ease;
         }
         .forms-btn:hover { background-color: #5b379b; }
+        .forms-icon { width: 18px; height: 18px; }
 
         .about-btn {
             display: inline-flex; align-items: center; gap: 10px; background-color: #17a2b8; color: white;
@@ -58,6 +59,13 @@
             display: inline-flex; align-items: center; gap: 8px; background-color: #6c757d; color: white;
             border: none; padding: 8px 16px; font-size: 14px; font-weight: bold; border-radius: 4px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1); cursor: pointer; display: none; 
+        }
+        .btn-icon { width: 16px; height: 16px; }
+
+        .reroll-btn {
+            display: inline-flex; align-items: center; gap: 6px; background-color: #007BFF; color: white;
+            border: none; padding: 6px 12px; font-size: 13px; font-weight: bold; border-radius: 4px;
+            cursor: pointer;
         }
 
         .creator-section { width: 100%; max-width: 800px; margin-top: 20px; }
@@ -99,7 +107,7 @@
     </div>
     
     <div class="info-container">
-        <p class="status-msg" id="status">Syncing directly with GitHub storage branch...</p>
+        <p class="status-msg" id="status">Syncing directly with GitHub storage...</p>
     </div>
 
     <div class="actions-wrapper">
@@ -125,10 +133,10 @@
     </div>
 
     <script>
-        // 🌐 Configured to sync directly with your branch: Videos
-        const GITHUB_API_URL = "https://api.github.com/repos/demoreviewtv-png/freevidv1/contents/videos?ref=Videos";
-        const VIDEO_FOLDER = "https://raw.githubusercontent.com/demoreviewtv-png/freevidv1/Videos/videos/";
-        const THUMBNAIL_FOLDER = "https://raw.githubusercontent.com/demoreviewtv-png/freevidv1/Videos/videos/thumbnails/";
+        // 🌐 Connects straight to your public video repo folder via GitHub's API!
+        const GITHUB_API_URL = "https://api.github.com/repos/demoreviewtv-png/FREEVID-Vidstorage/contents/videos";
+        const VIDEO_FOLDER = "https://raw.githubusercontent.com/demoreviewtv-png/FREEVID-Vidstorage/main/videos/";
+        const THUMBNAIL_FOLDER = "https://raw.githubusercontent.com/demoreviewtv-png/FREEVID-Vidstorage/main/videos/thumbnails/";
 
         let serverVideos = [];
         let currentlyPlayingTitle = "";
@@ -161,12 +169,6 @@
                 const response = await fetch(GITHUB_API_URL);
                 const items = await response.json();
                 
-                if (items.message && items.message.includes("Not Found")) {
-                    status.textContent = "Error: Make sure a folder named 'videos' exists inside your Videos branch!";
-                    return;
-                }
-
-                // Filter out everything except support media formatting extensions
                 serverVideos = items
                     .filter(item => item.type === 'file' && /\.(mp4|webm|mkv|avi)$/i.test(item.name))
                     .map(item => item.name);
@@ -176,10 +178,10 @@
                     searchInput.disabled = false;
                     showRandomVideos();
                 } else {
-                    status.textContent = "Connected to branch, but no videos found in the folder.";
+                    status.textContent = "Connected to storage, but no videos found inside /videos.";
                 }
             } catch (err) {
-                status.textContent = "Error: Couldn't read GitHub branch. Make sure the repository is PUBLIC!";
+                status.textContent = "Error: Couldn't read GitHub storage. Make sure the FREEVID-Vidstorage repo is PUBLIC!";
             }
         }
 
