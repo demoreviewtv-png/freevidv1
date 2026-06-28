@@ -1,6 +1,6 @@
 # freevidv1
 
-## https://freevid-v1.netlify.app
+## https://freevidv1.vercel.app
 
 HELLO AND WELCOME!
 
@@ -16,3 +16,6 @@ Render Was Too Complicated >:[
 
 V1.1.1 - Fixed Site To Connect To This Repository In THe "Videos" Branch //
 No Notes
+
+V1.2.0 - Set Up On "Vercel.com" Replacing "Wasmer.io"
+Wasmer did not support our github repo.
