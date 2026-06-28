@@ -141,7 +141,7 @@
     </div>
 
     <div id="videoWrapper" class="video-wrapper">
-        <video id="player" controls autoplay controlsList="nodownload" disablePictureInPicture oncontextmenu="return false;"></video>
+        <video id="player" controls controlsList="nodownload" disablePictureInPicture oncontextmenu="return false;"></video>
     </div>
     
     <div class="info-container">
@@ -206,14 +206,13 @@
         })();
 
         function showRateLimitScreen() {
-            // Overwrite body structure instantly to stop connections
             document.body.innerHTML = `
                 <div class="rate-limit-overlay">
                     <h2>Connection Blocked</h2>
                     <p>You have connected too many times in one minute, you have been suspennded from connecting for one minute.</p>
                 </div>
             `;
-            window.stop(); // Stops further assets from continuing tracking downloads
+            window.stop(); 
             throw new Error("Execution suspended due to rapid reloads.");
         }
 
@@ -281,7 +280,7 @@
             player.src = videoSrc;
             document.getElementById('videoWrapper').style.display = "flex";
             document.getElementById('search').value = meta.title;
-            document.getElementById('status').textContent = "Now playing: " + meta.title;
+            document.getElementById('status').textContent = "Selected: " + meta.title + " (Press Play to Watch)";
             
             player.loop = video.includes("[AutoLoop]");
             loopBtn.classList.toggle('active', player.loop);
@@ -295,9 +294,8 @@
             } else { dlBtn.style.display = "none"; }
             
             resetBtn.style.display = "inline-flex";
-            volumeCtrl.style.display = "inline-flex"; // Show volume controls when playing
+            volumeCtrl.style.display = "inline-flex"; 
             
-            // Sync slider value to player volume on load
             document.getElementById('volumeSlider').value = player.volume;
 
             if (meta.creator && meta.creator !== "Unknown Creator") { showCreatorGrid(meta.creator); } else { showRandomVideos(); }
@@ -308,7 +306,7 @@
             if (trueDuration && currentlyPlayingTitle) {
                 const fullDisplay = `[${trueDuration}] ${currentlyPlayingTitle}`;
                 document.getElementById('search').value = fullDisplay;
-                document.getElementById('status').textContent = "Now playing: " + fullDisplay;
+                document.getElementById('status').textContent = "Selected: " + fullDisplay + " (Press Play to Watch)";
             }
         });
 
@@ -415,7 +413,7 @@
             document.getElementById('downloadBtn').style.display = "none";
             document.getElementById('loopBtn').style.display = "none";
             document.getElementById('resetBtn').style.display = "none";
-            document.getElementById('volumeControl').style.display = "none"; // Hide volume controls on reset
+            document.getElementById('volumeControl').style.display = "none"; 
             showRandomVideos(); 
         }
 
