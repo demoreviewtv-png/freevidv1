@@ -77,7 +77,7 @@
         .reset-btn {
             display: inline-flex; align-items: center; gap: 8px; background-color: #6c757d; color: white;
             border: none; padding: 8px 16px; font-size: 14px; font-weight: bold; border-radius: 4px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1); cursor: pointer; display: none; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1); pointer: cursor; display: none; 
         }
         .btn-icon { width: 16px; height: 16px; }
 
@@ -162,7 +162,7 @@
     <div id="creatorSection" class="creator-section">
         <div class="section-header-container">
             <h2 id="creatorHeader">Discover Videos</h2>
-            <button id="rerollBtn" class="reroll-btn" onclick="showRandomVideos()">Reroll</button>
+            <button id="rerollBtn" class="reroll-btn" onclick="handleRerollClick()">Reroll</button>
         </div>
         <div id="thumbnailGrid" class="thumbnail-grid"></div>
     </div>
@@ -181,24 +181,17 @@
             const now = Date.now();
             const ONE_MINUTE = 60000;
             
-            // Check if user is currently under a suspension lock
             const lockExpires = localStorage.getItem('freevid_lock_time');
             if (lockExpires && now < parseInt(lockExpires)) {
                 showRateLimitScreen();
                 return;
             }
 
-            // Fetch history of reloads
             let reloadHistory = JSON.parse(localStorage.getItem('freevid_reload_history') || '[]');
-            
-            // Filter timestamps down to only logs within the last 60 seconds
             reloadHistory = reloadHistory.filter(timestamp => (now - timestamp) < ONE_MINUTE);
-            
-            // Log this current window interaction load
             reloadHistory.push(now);
             localStorage.setItem('freevid_reload_history', JSON.stringify(reloadHistory));
 
-            // If recorded instances hit more than 6 within 1 minute, activate penalty lock
             if (reloadHistory.length > 6) {
                 localStorage.setItem('freevid_lock_time', (now + ONE_MINUTE).toString());
                 showRateLimitScreen();
@@ -222,6 +215,7 @@
 
         let serverVideos = [];
         let currentlyPlayingTitle = "";
+        let currentlyPlayingCreator = ""; // Track current creator context
 
         function formatDuration(seconds) {
             if (isNaN(seconds) || seconds === Infinity || seconds <= 0) return "";
@@ -277,6 +271,7 @@
             const player = document.getElementById('player');
 
             currentlyPlayingTitle = meta.title;
+            currentlyPlayingCreator = meta.creator; // Remember current creator context
             player.src = videoSrc;
             document.getElementById('videoWrapper').style.display = "flex";
             document.getElementById('search').value = meta.title;
@@ -324,6 +319,17 @@
             player.volume = val;
         }
 
+        // Smart Reroll system logic
+        function handleRerollClick() {
+            const player = document.getElementById('player');
+            // If video player has an active source path matching, shuffle the creator items instead of resetting to discover view
+            if (player.src && currentlyPlayingCreator && currentlyPlayingCreator !== "Unknown Creator") {
+                showCreatorGrid(currentlyPlayingCreator);
+            } else {
+                showRandomVideos();
+            }
+        }
+
         function showRandomVideos() {
             document.getElementById('creatorHeader').textContent = "Discover Videos";
             const shuffled = [...serverVideos].sort(() => 0.5 - Math.random());
@@ -332,8 +338,10 @@
 
         function showCreatorGrid(creatorName) {
             document.getElementById('creatorHeader').textContent = `More Videos From: ${creatorName}`;
+            // Filter all matches, then randomise/shuffle the creator's item order list
             const matches = serverVideos.filter(video => parseVideoMeta(video).creator.toLowerCase() === creatorName.toLowerCase());
-            buildGridCards(matches);
+            const shuffledMatches = [...matches].sort(() => 0.5 - Math.random());
+            buildGridCards(shuffledMatches);
         }
 
         function buildGridCards(videoList) {
@@ -407,6 +415,7 @@
         function resetPlayer() {
             const player = document.getElementById('player');
             player.removeAttribute('src'); player.load(); 
+            currentlyPlayingCreator = ""; // Clear creator context on reset
             document.getElementById('videoWrapper').style.display = "none";
             document.getElementById('search').value = "";
             document.getElementById('status').textContent = `Successfully synced! (${serverVideos.length} videos found)`;
