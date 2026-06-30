@@ -74,10 +74,19 @@
         .loop-btn.active { background-color: #28a745; }
         .loop-btn.active:hover { background-color: #218838; }
 
+        /* 👍 Like Button Styling */
+        .like-btn {
+            display: inline-flex; align-items: center; gap: 8px; background-color: #e9ecef; color: #333;
+            border: 1px solid #ccc; padding: 8px 16px; font-size: 14px; font-weight: bold; border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05); cursor: pointer; transition: all 0.2s ease; display: none;
+        }
+        .like-btn.liked { background-color: #e83e8c; color: white; border-color: #e83e8c; }
+        .like-btn.liked:hover { background-color: #bd2130; }
+
         .reset-btn {
             display: inline-flex; align-items: center; gap: 8px; background-color: #6c757d; color: white;
             border: none; padding: 8px 16px; font-size: 14px; font-weight: bold; border-radius: 4px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1); pointer: cursor; display: none; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1); cursor: pointer; display: none; 
         }
         .btn-icon { width: 16px; height: 16px; }
 
@@ -99,10 +108,18 @@
         .section-header-container { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #ccc; padding-bottom: 8px; margin-bottom: 15px; }
         .creator-section h2 { font-size: 18px; color: #444; margin: 0; }
         .thumbnail-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 15px; width: 100%; }
-        .video-card { background: white; border: 1px solid #ddd; border-radius: 6px; overflow: hidden; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.05); transition: transform 0.2s, border-color 0.2s; }
+        .video-card { background: white; border: 1px solid #ddd; border-radius: 6px; overflow: hidden; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.05); transition: transform 0.2s, border-color 0.2s; position: relative; }
         .video-card:hover { transform: translateY(-3px); border-color: #007BFF; }
         .thumb-preview { width: 100%; aspect-ratio: 16 / 9; background: #000; overflow: hidden; }
         .thumb-preview img { width: 100%; height: 100%; object-fit: cover; }
+        
+        /* Card Badge for Liked Videos */
+        .card-like-badge {
+            position: absolute; top: 8px; right: 8px; background: rgba(232, 62, 140, 0.9);
+            color: white; font-size: 11px; font-weight: bold; padding: 3px 8px; border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2); z-index: 2;
+        }
+
         .card-details { padding: 10px; }
         .card-title { font-size: 14px; font-weight: bold; color: #333; text-overflow: ellipsis; white-space: nowrap; overflow: hidden; display: flex; align-items: center; }
         .card-title .title-duration { font-weight: normal; color: #777; font-family: monospace; font-size: 12px; background: #eee; padding: 2px 5px; border-radius: 3px; margin-right: 8px; flex-shrink: 0; }
@@ -151,6 +168,7 @@
     <div class="actions-wrapper">
         <a id="downloadBtn" href="#" download class="download-btn">Download Video</a>
         <button id="loopBtn" class="loop-btn" onclick="toggleLoop()"><span id="loopText">Looping: OFF</span></button>
+        <button id="likeBtn" class="like-btn" onclick="toggleLike()"><span>Like Video 👍</span></button>
         <button id="resetBtn" class="reset-btn" onclick="resetPlayer()">Go Back</button>
         
         <div id="volumeControl" class="volume-container">
@@ -215,7 +233,8 @@
 
         let serverVideos = [];
         let currentlyPlayingTitle = "";
-        let currentlyPlayingCreator = ""; // Track current creator context
+        let currentlyPlayingCreator = "";
+        let currentlyPlayingFilename = ""; // Store actual filename context to properly pair local storage actions
 
         function formatDuration(seconds) {
             if (isNaN(seconds) || seconds === Infinity || seconds <= 0) return "";
@@ -266,12 +285,15 @@
             const videoSrc = VIDEO_FOLDER + encodeURIComponent(video);
             const dlBtn = document.getElementById('downloadBtn');
             const loopBtn = document.getElementById('loopBtn');
+            const likeBtn = document.getElementById('likeBtn');
             const resetBtn = document.getElementById('resetBtn');
             const volumeCtrl = document.getElementById('volumeControl');
             const player = document.getElementById('player');
 
             currentlyPlayingTitle = meta.title;
-            currentlyPlayingCreator = meta.creator; // Remember current creator context
+            currentlyPlayingCreator = meta.creator; 
+            currentlyPlayingFilename = video; // Track video identity
+            
             player.src = videoSrc;
             document.getElementById('videoWrapper').style.display = "flex";
             document.getElementById('search').value = meta.title;
@@ -288,6 +310,10 @@
                 dlBtn.style.display = "inline-flex";
             } else { dlBtn.style.display = "none"; }
             
+            // Sync and trigger like button look states
+            updateLikeButtonUI();
+            likeBtn.style.display = "inline-flex";
+
             resetBtn.style.display = "inline-flex";
             volumeCtrl.style.display = "inline-flex"; 
             
@@ -314,15 +340,48 @@
             }
         }
 
+        /* 👍 Likes Logic Implementation */
+        function getLikedVideos() {
+            return JSON.parse(localStorage.getItem('freevid_liked_videos') || '[]');
+        }
+
+        function toggleLike() {
+            if (!currentlyPlayingFilename) return;
+            let likedList = getLikedVideos();
+            const index = likedList.indexOf(currentlyPlayingFilename);
+
+            if (index > -1) {
+                likedList.splice(index, 1); // Unlike
+            } else {
+                likedList.push(currentlyPlayingFilename); // Like
+            }
+
+            localStorage.setItem('freevid_liked_videos', JSON.stringify(likedList));
+            updateLikeButtonUI();
+
+            // Refresh current grid view in the background so badges update instantly
+            if (currentlyPlayingCreator && currentlyPlayingCreator !== "Unknown Creator") {
+                const matches = serverVideos.filter(video => parseVideoMeta(video).creator.toLowerCase() === currentlyPlayingCreator.toLowerCase());
+                buildGridCards(matches);
+            }
+        }
+
+        function updateLikeButtonUI() {
+            const likeBtn = document.getElementById('likeBtn');
+            const likedList = getLikedVideos();
+            const isLiked = likedList.includes(currentlyPlayingFilename);
+
+            likeBtn.classList.toggle('liked', isLiked);
+            likeBtn.querySelector('span').textContent = isLiked ? "Liked ❤️" : "Like Video 👍";
+        }
+
         function changeVolume(val) {
             const player = document.getElementById('player');
             player.volume = val;
         }
 
-        // Smart Reroll system logic
         function handleRerollClick() {
             const player = document.getElementById('player');
-            // If video player has an active source path matching, shuffle the creator items instead of resetting to discover view
             if (player.src && currentlyPlayingCreator && currentlyPlayingCreator !== "Unknown Creator") {
                 showCreatorGrid(currentlyPlayingCreator);
             } else {
@@ -338,7 +397,6 @@
 
         function showCreatorGrid(creatorName) {
             document.getElementById('creatorHeader').textContent = `More Videos From: ${creatorName}`;
-            // Filter all matches, then randomise/shuffle the creator's item order list
             const matches = serverVideos.filter(video => parseVideoMeta(video).creator.toLowerCase() === creatorName.toLowerCase());
             const shuffledMatches = [...matches].sort(() => 0.5 - Math.random());
             buildGridCards(shuffledMatches);
@@ -346,7 +404,9 @@
 
         function buildGridCards(videoList) {
             const grid = document.getElementById('thumbnailGrid');
+            const likedList = getLikedVideos();
             grid.innerHTML = ""; 
+
             videoList.forEach(video => {
                 const meta = parseVideoMeta(video);
                 const videoSrc = VIDEO_FOLDER + encodeURIComponent(video);
@@ -354,6 +414,14 @@
                 const card = document.createElement('div');
                 card.className = "video-card";
                 card.onclick = () => { selectVideo(video); window.scrollTo({ top: 0, behavior: 'smooth' }); };
+
+                // Append badge indicator if the current iteration asset matches liked catalog records
+                if (likedList.includes(video)) {
+                    const badge = document.createElement('div');
+                    badge.className = "card-like-badge";
+                    badge.textContent = "❤️ Liked";
+                    card.appendChild(badge);
+                }
 
                 const previewDiv = document.createElement('div');
                 previewDiv.className = "thumb-preview";
@@ -415,13 +483,14 @@
         function resetPlayer() {
             const player = document.getElementById('player');
             player.removeAttribute('src'); player.load(); 
-            currentlyPlayingCreator = ""; // Clear creator context on reset
+            currentlyPlayingCreator = ""; 
+            currentlyPlayingFilename = ""; // Clear filename text trace tracking logs
             document.getElementById('videoWrapper').style.display = "none";
             document.getElementById('search').value = "";
             document.getElementById('status').textContent = `Successfully synced! (${serverVideos.length} videos found)`;
             document.getElementById('downloadBtn').style.display = "none";
             document.getElementById('loopBtn').style.display = "none";
-            document.getElementById('resetBtn').style.display = "none";
+            document.getElementById('likeBtn').style.display = "none"; // Hide like button on back reset click interactions
             document.getElementById('volumeControl').style.display = "none"; 
             showRandomVideos(); 
         }
