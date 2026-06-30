@@ -1,11 +1,12 @@
-<a href="https://freevid-v1.netlify.app/">Go BAAAAAAAAAACK</a>
+<a href="/" style="font-family: 'Comic Sans MS', 'Comic Sans', 'Chalkboard SE', 'Comic Neue', sans-serif;">Go BAAAAAAAAAACK</a>
 
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>FREEVID!!</title>
     <style>
-        body { font-family: Arial, sans-serif; display: flex; flex-direction: column; align-items: center; padding: 20px; background: #f4f4f9; }
+        /* 🎨 Updated to Comic Sans everywhere! */
+        body { font-family: "Comic Sans MS", "Comic Sans", "Chalkboard SE", "Comic Neue", sans-serif; display: flex; flex-direction: column; align-items: center; padding: 20px; background: #f4f4f9; }
         
         /* ✨ Credits Style Box */
         .ai-credits {
@@ -22,7 +23,7 @@
         }
 
         .search-container { position: relative; width: 100%; max-width: 600px; margin-bottom: 15px; }
-        input { width: 100%; padding: 12px; font-size: 16px; box-sizing: border-box; border: 2px solid #ccc; border-radius: 4px; }
+        input { font-family: inherit; width: 100%; padding: 12px; font-size: 16px; box-sizing: border-box; border: 2px solid #ccc; border-radius: 4px; }
         .results { position: absolute; width: 100%; background: white; border: 1px solid #ccc; max-height: 200px; overflow-y: auto; z-index: 10; display: none; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .results div { padding: 10px; cursor: pointer; }
         .results div:hover { background: #eee; }
@@ -38,6 +39,7 @@
         .forms-icon { width: 18px; height: 18px; }
 
         .about-btn {
+            font-family: inherit;
             display: inline-flex; align-items: center; gap: 10px; background-color: #17a2b8; color: white;
             border: none; padding: 10px 20px; font-size: 15px; font-weight: bold; border-radius: 4px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.2); cursor: pointer; transition: background 0.2s ease;
@@ -67,6 +69,7 @@
         .download-btn:hover { background-color: #0056b3; }
         
         .loop-btn {
+            font-family: inherit;
             display: inline-flex; align-items: center; gap: 8px; background-color: #6c757d; color: white;
             border: none; padding: 8px 16px; font-size: 14px; font-weight: bold; border-radius: 4px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1); cursor: pointer; transition: background 0.2s ease; display: none;
@@ -76,6 +79,7 @@
 
         /* 👍 Like Button Styling */
         .like-btn {
+            font-family: inherit;
             display: inline-flex; align-items: center; gap: 8px; background-color: #e9ecef; color: #333;
             border: 1px solid #ccc; padding: 8px 16px; font-size: 14px; font-weight: bold; border-radius: 4px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.05); cursor: pointer; transition: all 0.2s ease; display: none;
@@ -84,6 +88,7 @@
         .like-btn.liked:hover { background-color: #bd2130; }
 
         .reset-btn {
+            font-family: inherit;
             display: none; align-items: center; gap: 8px; background-color: #6c757d; color: white;
             border: none; padding: 8px 16px; font-size: 14px; font-weight: bold; border-radius: 4px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1); cursor: pointer; 
@@ -99,6 +104,7 @@
         .volume-slider { cursor: pointer; width: 100px; height: 6px; accent-color: #007BFF; }
 
         .reroll-btn {
+            font-family: inherit;
             display: inline-flex; align-items: center; gap: 6px; background-color: #007BFF; color: white;
             border: none; padding: 6px 12px; font-size: 13px; font-weight: bold; border-radius: 4px;
             cursor: pointer;
@@ -122,19 +128,20 @@
 
         .card-details { padding: 10px; }
         .card-title { font-size: 14px; font-weight: bold; color: #333; text-overflow: ellipsis; white-space: nowrap; overflow: hidden; display: flex; align-items: center; }
+        /* Kept monospace font for the duration stamp to keep the numbers evenly spaced out cleanly */
         .card-title .title-duration { font-weight: normal; color: #777; font-family: monospace; font-size: 12px; background: #eee; padding: 2px 5px; border-radius: 3px; margin-right: 8px; flex-shrink: 0; }
         .card-creator { font-size: 12px; color: #666; margin-top: 4px; text-overflow: ellipsis; white-space: nowrap; overflow: hidden; }
 
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); display: flex; justify-content: center; align-items: center; z-index: 100; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
         .modal-overlay.open { opacity: 1; pointer-events: auto; }
         .modal-content { background: white; padding: 30px; border-radius: 8px; max-width: 500px; width: 90%; box-shadow: 0 5px 15px rgba(0,0,0,0.3); text-align: left; position: relative; }
-        .close-modal-btn { margin-top: 20px; background-color: #6c757d; color: white; border: none; padding: 8px 16px; font-weight: bold; border-radius: 4px; cursor: pointer; float: right; }
+        .close-modal-btn { font-family: inherit; margin-top: 20px; background-color: #6c757d; color: white; border: none; padding: 8px 16px; font-weight: bold; border-radius: 4px; cursor: pointer; float: right; }
 
         /* 🛡️ Rate Limiter Screen CSS Overlay */
         .rate-limit-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #fff;
             display: flex; flex-direction: column; justify-content: center; align-items: center;
-            z-index: 9999; color: #d9534f; text-align: center; padding: 20px; font-family: sans-serif;
+            z-index: 9999; color: #d9534f; text-align: center; padding: 20px; font-family: "Comic Sans MS", "Comic Sans", sans-serif;
         }
         .rate-limit-overlay h2 { font-size: 28px; margin-bottom: 10px; }
         .rate-limit-overlay p { font-size: 18px; color: #333; max-width: 600px; line-height: 1.5; }
@@ -173,7 +180,7 @@
         
         <div id="volumeControl" class="volume-container">
             <span>Vol:</span>
-            <input range" id="volumeSlider" class="volume-slider" min="0" max="1" step="0.05" value="1" oninput="changeVolume(this.value)">
+            <input type="range" id="volumeSlider" class="volume-slider" min="0" max="1" step="0.05" value="1" oninput="changeVolume(this.value)">
         </div>
     </div>
 
@@ -227,7 +234,7 @@
             document.body.innerHTML = `
                 <div class="rate-limit-overlay">
                     <h2>Connection Blocked</h2>
-                    <p>You have connected too many times in one minute, you have been suspennded from connecting for one minute.</p>
+                    <p>You have connected too many times in one minute, you have been suspended from connecting for one minute.</p>
                 </div>
             `;
             window.stop(); 
@@ -271,12 +278,11 @@
                 const response = await fetch(GITHUB_API_URL);
                 const items = await response.json();
                 
-                // 🛠️ Smart protection against GitHub API Rate Limits
                 if (!Array.isArray(items)) {
-                    if (items.message && items.message.includes("API rate limit")) {
-                        status.textContent = "GitHub API rate limit exceeded! Please wait a few minutes before trying again.";
+                    if (items && items.message && items.message.includes("rate limit")) {
+                        status.textContent = "GitHub rate limit exceeded. Please try again in a few minutes.";
                     } else {
-                        status.textContent = "Error connecting: Invalid response received from GitHub.";
+                        status.textContent = "Unable to load videos. GitHub returned an unexpected response format.";
                     }
                     return;
                 }
@@ -294,7 +300,7 @@
                     status.textContent = "Connected to storage, but no videos found inside /videos.";
                 }
             } catch (err) {
-                status.textContent = "Error: Couldn't read GitHub storage. Make sure the FREEVID-Vidstorage repo is PUBLIC!";
+                status.textContent = "Error: Couldn't read GitHub storage. Make sure the repo is public.";
             }
         }
 
