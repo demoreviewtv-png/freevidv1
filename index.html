@@ -173,7 +173,7 @@
         
         <div id="volumeControl" class="volume-container">
             <span>Vol:</span>
-            <input type="range" id="volumeSlider" class="volume-slider" min="0" max="1" step="0.05" value="1" oninput="changeVolume(this.value)">
+            <input range" id="volumeSlider" class="volume-slider" min="0" max="1" step="0.05" value="1" oninput="changeVolume(this.value)">
         </div>
     </div>
 
@@ -271,6 +271,16 @@
                 const response = await fetch(GITHUB_API_URL);
                 const items = await response.json();
                 
+                // 🛠️ Smart protection against GitHub API Rate Limits
+                if (!Array.isArray(items)) {
+                    if (items.message && items.message.includes("API rate limit")) {
+                        status.textContent = "GitHub API rate limit exceeded! Please wait a few minutes before trying again.";
+                    } else {
+                        status.textContent = "Error connecting: Invalid response received from GitHub.";
+                    }
+                    return;
+                }
+
                 serverVideos = items
                     .filter(item => item.type === 'file' && /\.(mp4|webm|mkv|avi)$/i.test(item.name))
                     .map(item => item.name);
