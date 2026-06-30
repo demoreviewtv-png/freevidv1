@@ -234,7 +234,7 @@
         let serverVideos = [];
         let currentlyPlayingTitle = "";
         let currentlyPlayingCreator = "";
-        let currentlyPlayingFilename = ""; // Store actual filename context to properly pair local storage actions
+        let currentlyPlayingFilename = ""; 
 
         function formatDuration(seconds) {
             if (isNaN(seconds) || seconds === Infinity || seconds <= 0) return "";
@@ -292,7 +292,7 @@
 
             currentlyPlayingTitle = meta.title;
             currentlyPlayingCreator = meta.creator; 
-            currentlyPlayingFilename = video; // Track video identity
+            currentlyPlayingFilename = video; 
             
             player.src = videoSrc;
             document.getElementById('videoWrapper').style.display = "flex";
@@ -310,7 +310,6 @@
                 dlBtn.style.display = "inline-flex";
             } else { dlBtn.style.display = "none"; }
             
-            // Sync and trigger like button look states
             updateLikeButtonUI();
             likeBtn.style.display = "inline-flex";
 
@@ -340,7 +339,6 @@
             }
         }
 
-        /* 👍 Likes Logic Implementation */
         function getLikedVideos() {
             return JSON.parse(localStorage.getItem('freevid_liked_videos') || '[]');
         }
@@ -351,15 +349,14 @@
             const index = likedList.indexOf(currentlyPlayingFilename);
 
             if (index > -1) {
-                likedList.splice(index, 1); // Unlike
+                likedList.splice(index, 1); 
             } else {
-                likedList.push(currentlyPlayingFilename); // Like
+                likedList.push(currentlyPlayingFilename); 
             }
 
             localStorage.setItem('freevid_liked_videos', JSON.stringify(likedList));
             updateLikeButtonUI();
 
-            // Refresh current grid view in the background so badges update instantly
             if (currentlyPlayingCreator && currentlyPlayingCreator !== "Unknown Creator") {
                 const matches = serverVideos.filter(video => parseVideoMeta(video).creator.toLowerCase() === currentlyPlayingCreator.toLowerCase());
                 buildGridCards(matches);
@@ -415,7 +412,6 @@
                 card.className = "video-card";
                 card.onclick = () => { selectVideo(video); window.scrollTo({ top: 0, behavior: 'smooth' }); };
 
-                // Append badge indicator if the current iteration asset matches liked catalog records
                 if (likedList.includes(video)) {
                     const badge = document.createElement('div');
                     badge.className = "card-like-badge";
@@ -428,8 +424,12 @@
                 const thumbImage = document.createElement('img');
                 thumbImage.src = `${THUMBNAIL_FOLDER}${encodeURIComponent(baseName)}.jpg`;
                 thumbImage.onerror = function() {
-                    if (this.src.endsWith('.jpg')) this.src = `${THUMBNAIL_FOLDER}${encodeURIComponent(baseName)}.png`;
-                    else this.src = `${THUMBNAIL_FOLDER}DEFAULT-THUMBNAIL.png`;
+                    if (this.src.endsWith('.jpg')) {
+                        this.src = `${THUMBNAIL_FOLDER}${encodeURIComponent(baseName)}.png`;
+                    } else {
+                        // 🔄 Updated default fallback asset name here
+                        this.src = `${THUMBNAIL_FOLDER}DEFAULT-THUMBNAIL2.png`;
+                    }
                 };
                 previewDiv.appendChild(thumbImage);
 
@@ -484,13 +484,13 @@
             const player = document.getElementById('player');
             player.removeAttribute('src'); player.load(); 
             currentlyPlayingCreator = ""; 
-            currentlyPlayingFilename = ""; // Clear filename text trace tracking logs
+            currentlyPlayingFilename = ""; 
             document.getElementById('videoWrapper').style.display = "none";
             document.getElementById('search').value = "";
             document.getElementById('status').textContent = `Successfully synced! (${serverVideos.length} videos found)`;
             document.getElementById('downloadBtn').style.display = "none";
             document.getElementById('loopBtn').style.display = "none";
-            document.getElementById('likeBtn').style.display = "none"; // Hide like button on back reset click interactions
+            document.getElementById('likeBtn').style.display = "none"; 
             document.getElementById('volumeControl').style.display = "none"; 
             showRandomVideos(); 
         }
