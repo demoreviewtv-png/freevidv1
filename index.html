@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <title>FREEVID!!</title>
     <style>
-        /* 🎨 Updated to Comic Sans everywhere! */
+        /* 🎨 Comic Sans Styling Everywhere */
         body { font-family: "Comic Sans MS", "Comic Sans", "Chalkboard SE", "Comic Neue", sans-serif; display: flex; flex-direction: column; align-items: center; padding: 20px; background: #f4f4f9; }
         
         /* ✨ Credits Style Box */
@@ -51,7 +51,7 @@
             box-shadow: 0 4px 10px rgba(0,0,0,0.3); overflow: hidden; display: none; justify-content: center; align-items: center;
         }
         
-        /* 🔇 Hide the internal volume elements inside WebKit/Blink default browser controller skins */
+        /* 🔇 Hide browser default internal volume elements */
         video::-webkit-media-controls-volume-slider { display: none !important; }
         video::-webkit-media-controls-mute-button { display: none !important; }
         video { width: 100%; max-height: 70vh; background: black; object-fit: contain; display: block; }
@@ -93,9 +93,8 @@
             border: none; padding: 8px 16px; font-size: 14px; font-weight: bold; border-radius: 4px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1); cursor: pointer; 
         }
-        .btn-icon { width: 16px; height: 16px; }
 
-        /* 🎚️ Custom Volume Controls Layout */
+        /* 🎚️ Custom Volume Layout */
         .volume-container {
             display: none; align-items: center; gap: 8px; background-color: #e9ecef;
             padding: 6px 14px; border-radius: 4px; border: 1px solid #ccc;
@@ -119,7 +118,6 @@
         .thumb-preview { width: 100%; aspect-ratio: 16 / 9; background: #000; overflow: hidden; }
         .thumb-preview img { width: 100%; height: 100%; object-fit: cover; }
         
-        /* Card Badge for Liked Videos */
         .card-like-badge {
             position: absolute; top: 8px; right: 8px; background: rgba(232, 62, 140, 0.9);
             color: white; font-size: 11px; font-weight: bold; padding: 3px 8px; border-radius: 12px;
@@ -128,7 +126,6 @@
 
         .card-details { padding: 10px; }
         .card-title { font-size: 14px; font-weight: bold; color: #333; text-overflow: ellipsis; white-space: nowrap; overflow: hidden; display: flex; align-items: center; }
-        /* Kept monospace font for the duration stamp to keep the numbers cleanly aligned */
         .card-title .title-duration { font-weight: normal; color: #777; font-family: monospace; font-size: 12px; background: #eee; padding: 2px 5px; border-radius: 3px; margin-right: 8px; flex-shrink: 0; }
         .card-creator { font-size: 12px; color: #666; margin-top: 4px; text-overflow: ellipsis; white-space: nowrap; overflow: hidden; }
 
@@ -224,7 +221,7 @@
             reloadHistory.push(now);
             localStorage.setItem('freevid_reload_history', JSON.stringify(reloadHistory));
 
-            if (reloadHistory.length > 10) { // Slightly eased limit for active testing
+            if (reloadHistory.length > 10) {
                 localStorage.setItem('freevid_lock_time', (now + ONE_MINUTE).toString());
                 showRateLimitScreen();
             }
@@ -241,12 +238,10 @@
             throw new Error("Execution suspended due to rapid reloads.");
         }
 
-        const GITHUB_API_URL = "https://api.github.com/repos/demoreviewtv-png/FREEVID-Vidstorage/contents/videos";
-        // 🚀 Fallback Route: Connects via global jsDelivr open-cache CDN if GitHub API rate blocks you
-        const JSDELIVR_FALLBACK_URL = "https://cdn.jsdelivr.net/gh/demoreviewtv-png/FREEVID-Vidstorage@videos/videos/";
-        
-        const VIDEO_FOLDER = "https://raw.githubusercontent.com/demoreviewtv-png/FREEVID-Vidstorage/videos/videos/";
-        const THUMBNAIL_FOLDER = "https://raw.githubusercontent.com/demoreviewtv-png/FREEVID-Vidstorage/videos/videos/thumbnails/";
+        // 🔗 Fixed updated API endpoints to use correct repo (freevidv1) and branch (Videos)
+        const GITHUB_API_URL = "https://api.github.com/repos/demoreviewtv-png/freevidv1/contents/videos?ref=Videos";
+        const VIDEO_FOLDER = "https://raw.githubusercontent.com/demoreviewtv-png/freevidv1/Videos/videos/";
+        const THUMBNAIL_FOLDER = "https://raw.githubusercontent.com/demoreviewtv-png/freevidv1/Videos/videos/thumbnails/";
 
         let serverVideos = [];
         let currentlyPlayingTitle = "";
@@ -276,10 +271,9 @@
 
         async function fetchVideoList() {
             const status = document.getElementById('status');
-            const searchInput = document.getElementById('search');
             
             try {
-                // Route 1: Try Primary GitHub API Connection
+                // Route 1: Primary Github API query
                 status.textContent = "Syncing directly with GitHub storage...";
                 const response = await fetch(GITHUB_API_URL);
                 const items = await response.json();
@@ -288,26 +282,15 @@
                     processSyncedVideos(items.filter(item => item.type === 'file').map(item => item.name));
                     return;
                 }
-                
-                // If response isn't an array, we triggered a block or rate-limit response. Force catch fallback block:
-                throw new Error("Invalid format from primary API");
+                throw new Error("API Limit or Format discrepancy triggered");
                 
             } catch (err) {
-                // Route 2: Auto-connect to Fallback Storage Server
-                status.textContent = "Primary connection busy. Switching to Fallback Storage...";
+                // Route 2: Fallback jsDelivr scrapers with updated paths
+                status.textContent = "Primary connection busy. Switching to Fallback Storage Server...";
                 try {
-                    // Fetch directly from the repository index cached on jsDelivr
-                    const fallbackResponse = await fetch("https://api.github.com/repos/demoreviewtv-png/FREEVID-Vidstorage/contents/videos");
-                    // If that's blocked too, fallback to parsing via an alternate index request or reading cached arrays if available.
-                    // For client stability, we'll try to read via raw scraper link or jsdelivr text map if yours existed. 
-                    // To guarantee it NEVER displays "Invalid response format" even when both GitHub endpoints completely ban your IP:
-                    const mockBackupList = []; 
-                    
-                    // Let's re-try a cleaner fallback array fetch
-                    const altRes = await fetch("https://cdn.jsdelivr.net/gh/demoreviewtv-png/FREEVID-Vidstorage@videos/videos/");
+                    const altRes = await fetch("https://cdn.jsdelivr.net/gh/demoreviewtv-png/freevidv1@Videos/videos/");
                     if(altRes.ok) {
                         const htmlText = await altRes.text();
-                        // Scrape file names directly from jsdelivr's directory view layout safely
                         const matches = htmlText.match(/href="([^"]+\.(mp4|webm|mkv|avi))"/gi);
                         if(matches) {
                             const scrapedFiles = matches.map(m => decodeURIComponent(m.replace('href="', '').replace('"', '')));
@@ -329,6 +312,7 @@
             const searchInput = document.getElementById('search');
             const status = document.getElementById('status');
             
+            // Filters down and eliminates folder listings like 'thumbnails'
             serverVideos = videoArray.filter(name => /\.(mp4|webm|mkv|avi)$/i.test(name));
 
             if (serverVideos.length > 0) {
@@ -337,7 +321,7 @@
                 showRandomVideos();
                 renderLikedVideosGrid();
             } else {
-                status.textContent = "Connected to storage, but no videos found inside /videos.";
+                status.textContent = "Connected to storage, but no compatible videos found inside /videos.";
             }
         }
 
