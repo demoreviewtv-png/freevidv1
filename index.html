@@ -1,559 +1,1096 @@
-<a href="/" style="font-family: 'Comic Sans MS', 'Comic Sans', 'Chalkboard SE', 'Comic Neue', sans-serif;">Go BAAAAAAAAAACK</a>
-
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>FREEVID!!</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Freevid!</title>
     <style>
-        /* 🎨 Comic Sans Styling Everywhere */
-        body { font-family: "Comic Sans MS", "Comic Sans", "Chalkboard SE", "Comic Neue", sans-serif; display: flex; flex-direction: column; align-items: center; padding: 20px; background: #f4f4f9; }
+        body { font-family: Arial, sans-serif; margin: 0; background: #f9f9f9; color: #111; transition: background 0.3s, color 0.3s; }
+        header { background: #fff; padding: 15px 30px; display: flex; justify-content: space-between; border-bottom: 1px solid #ddd; align-items: center; }
+        h1 { margin: 0; color: #ff0000; font-size: 24px; cursor: pointer; }
+        .container { max-width: 1000px; margin: 20px auto; padding: 0 15px; }
+        .view { display: none; }
+        .active { display: block; }
         
-        /* ✨ Credits Style Box */
-        .ai-credits {
-            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
-            color: white;
-            padding: 8px 16px;
-            font-size: 13px;
-            font-weight: bold;
-            border-radius: 20px;
-            margin-top: 10px;
-            margin-bottom: 5px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            letter-spacing: 0.5px;
-        }
-
-        .search-container { position: relative; width: 100%; max-width: 600px; margin-bottom: 15px; }
-        input { font-family: inherit; width: 100%; padding: 12px; font-size: 16px; box-sizing: border-box; border: 2px solid #ccc; border-radius: 4px; }
-        .results { position: absolute; width: 100%; background: white; border: 1px solid #ccc; max-height: 200px; overflow-y: auto; z-index: 10; display: none; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .results div { padding: 10px; cursor: pointer; }
-        .results div:hover { background: #eee; }
+        .video-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+        .video-card { background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); cursor: pointer; }
+        .video-card img { width: 100%; height: 160px; object-fit: cover; background: #000; }
+        .video-info { padding: 12px; display: flex; align-items: center; gap: 12px; }
         
-        .top-nav { display: flex; gap: 12px; margin-bottom: 25px; flex-wrap: wrap; justify-content: center; }
-
-        .forms-btn {
-            display: inline-flex; align-items: center; gap: 10px; background-color: #7248b9; color: white;
-            text-decoration: none; padding: 10px 20px; font-size: 15px; font-weight: bold; border-radius: 4px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2); transition: background 0.2s ease, transform 0.1s ease;
-        }
-        .forms-btn:hover { background-color: #5b379b; }
-        .forms-icon { width: 18px; height: 18px; }
-
-        .about-btn {
-            font-family: inherit;
-            display: inline-flex; align-items: center; gap: 10px; background-color: #17a2b8; color: white;
-            border: none; padding: 10px 20px; font-size: 15px; font-weight: bold; border-radius: 4px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2); cursor: pointer; transition: background 0.2s ease;
-        }
-        .about-btn:hover { background-color: #138496; }
-
-        .video-wrapper {
-            width: 100%; max-width: 800px; background: #000; border-radius: 8px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3); overflow: hidden; display: none; justify-content: center; align-items: center;
-        }
+        .pfp-avatar { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-weight: bold; color: white; font-size: 20px; text-transform: uppercase; background: #ccc; }
         
-        /* 🔇 Hide browser default internal volume elements */
-        video::-webkit-media-controls-volume-slider { display: none !important; }
-        video::-webkit-media-controls-mute-button { display: none !important; }
-        video { width: 100%; max-height: 70vh; background: black; object-fit: contain; display: block; }
+        .video-title { font-weight: bold; font-size: 15px; margin-bottom: 3px; }
+        .channel-name { color: #606060; font-size: 13px; cursor: pointer; }
+        .channel-name:hover { text-decoration: underline; color: #000; }
+
+        /* Dynamic wrapper using contain so the entire video frame is visible without cutting off edges */
+        .video-player-wrapper { position: relative; width: 100%; background: black; border-radius: 8px; overflow: hidden; max-height: 550px; display: flex; justify-content: center; align-items: center; }
+        video.custom-video { width: 100%; height: 100%; max-height: 550px; object-fit: contain; display: block; background: black; }
         
-        .info-container { margin-top: 15px; margin-bottom: 8px; text-align: center; }
-        .status-msg { margin: 0; color: #333; font-weight: bold; font-size: 18px; }
-
-        .actions-wrapper { display: flex; gap: 12px; margin-bottom: 20px; align-items: center; flex-wrap: wrap; justify-content: center; }
-
-        .download-btn {
-            display: inline-flex; align-items: center; gap: 8px; background-color: #007BFF; color: white;
-            text-decoration: none; padding: 8px 16px; font-size: 14px; font-weight: bold; border-radius: 4px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: background 0.2s ease; display: none; 
+        /* Fullscreen Adaptation */
+        .video-player-wrapper:fullscreen {
+            max-height: none;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 0;
         }
-        .download-btn:hover { background-color: #0056b3; }
+        .video-player-wrapper:fullscreen video.custom-video {
+            max-height: 100vh;
+            width: 100vw;
+            height: 100vh;
+            object-fit: contain;
+        }
+
+        /* Custom YouTube-style Video Controls UI */
+        .custom-controls-bar { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(transparent, rgba(0,0,0,0.85)); padding: 15px 15px 10px 15px; display: flex; flex-direction: column; gap: 8px; opacity: 0; transition: opacity 0.3s ease; z-index: 5; }
+        .video-player-wrapper:hover .custom-controls-bar { opacity: 1; }
         
-        .loop-btn {
-            font-family: inherit;
-            display: inline-flex; align-items: center; gap: 8px; background-color: #6c757d; color: white;
-            border: none; padding: 8px 16px; font-size: 14px; font-weight: bold; border-radius: 4px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1); cursor: pointer; transition: background 0.2s ease; display: none;
-        }
-        .loop-btn.active { background-color: #28a745; }
-        .loop-btn.active:hover { background-color: #218838; }
+        .control-timeline-track { width: 100%; height: 6px; background: rgba(255,255,255,0.3); border-radius: 3px; cursor: pointer; position: relative; overflow: hidden; }
+        .control-timeline-fill { height: 100%; background: #ff0000; width: 0%; pointer-events: none; }
 
-        /* 👍 Like Button Styling */
-        .like-btn {
-            font-family: inherit;
-            display: inline-flex; align-items: center; gap: 8px; background-color: #e9ecef; color: #333;
-            border: 1px solid #ccc; padding: 8px 16px; font-size: 14px; font-weight: bold; border-radius: 4px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05); cursor: pointer; transition: all 0.2s ease; display: none;
-        }
-        .like-btn.liked { background-color: #e83e8c; color: white; border-color: #e83e8c; }
-        .like-btn.liked:hover { background-color: #bd2130; }
+        .control-row { display: flex; justify-content: space-between; align-items: center; color: white; }
+        .control-row-left, .control-row-right { display: flex; align-items: center; gap: 15px; }
+        .ctrl-btn { background: none; border: none; color: white; font-size: 16px; cursor: pointer; padding: 0; width: auto; font-weight: bold; }
+        .ctrl-btn:hover { color: #ff0000; background: none; }
+        .time-display { font-size: 13px; font-weight: bold; font-family: monospace; }
 
-        .reset-btn {
-            font-family: inherit;
-            display: none; align-items: center; gap: 8px; background-color: #6c757d; color: white;
-            border: none; padding: 8px 16px; font-size: 14px; font-weight: bold; border-radius: 4px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1); cursor: pointer; 
-        }
+        /* Video Buffering / Loading Overlay Bar */
+        .video-loading-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; flex-direction: column; justify-content: center; align-items: center; color: white; z-index: 10; transition: opacity 0.3s ease; }
+        .video-loading-overlay.hidden { opacity: 0; pointer-events: none; }
+        .load-bar-track { width: 60%; max-width: 300px; background: rgba(255,255,255,0.3); border-radius: 6px; height: 16px; overflow: hidden; position: relative; margin-top: 10px; }
+        .load-bar-fill { height: 100%; background: #ff0000; width: 0%; transition: width 0.1s linear; }
+        .load-bar-text { font-size: 13px; font-weight: bold; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
 
-        /* 🎚️ Custom Volume Layout */
-        .volume-container {
-            display: none; align-items: center; gap: 8px; background-color: #e9ecef;
-            padding: 6px 14px; border-radius: 4px; border: 1px solid #ccc;
-            font-size: 13px; font-weight: bold; color: #444; box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        }
-        .volume-slider { cursor: pointer; width: 100px; height: 6px; accent-color: #007BFF; }
+        .shorts-container { display: flex; flex-direction: column; align-items: center; gap: 30px; padding-bottom: 50px; }
+        .short-card { background: #000; border-radius: 12px; width: 100%; max-width: 360px; height: 640px; position: relative; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; }
+        .short-card video { width: 100%; height: 100%; object-fit: contain; background: #000; max-height: none; border-radius: 0; }
+        .short-overlay { position: absolute; bottom: 0; left: 0; right: 0; padding: 20px; background: linear-gradient(transparent, rgba(0,0,0,0.8)); color: white; display: flex; flex-direction: column; gap: 8px; z-index: 2; pointer-events: none; }
+        .short-overlay .channel-name { color: #ddd; font-weight: bold; pointer-events: auto; }
+        .short-overlay .video-title { font-size: 16px; margin: 0; }
 
-        .reroll-btn {
-            font-family: inherit;
-            display: inline-flex; align-items: center; gap: 6px; background-color: #007BFF; color: white;
-            border: none; padding: 6px 12px; font-size: 13px; font-weight: bold; border-radius: 4px;
-            cursor: pointer;
-        }
-
-        .creator-section { width: 100%; max-width: 800px; margin-top: 20px; }
-        .section-header-container { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #ccc; padding-bottom: 8px; margin-bottom: 15px; }
-        .creator-section h2 { font-size: 18px; color: #444; margin: 0; }
-        .thumbnail-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 15px; width: 100%; }
-        .video-card { background: white; border: 1px solid #ddd; border-radius: 6px; overflow: hidden; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.05); transition: transform 0.2s, border-color 0.2s; position: relative; }
-        .video-card:hover { transform: translateY(-3px); border-color: #007BFF; }
-        .thumb-preview { width: 100%; aspect-ratio: 16 / 9; background: #000; overflow: hidden; }
-        .thumb-preview img { width: 100%; height: 100%; object-fit: cover; }
+        .comments-section { margin-top: 20px; background: #fff; padding: 15px; border-radius: 8px; }
+        input, button, textarea, select { padding: 10px; margin: 5px 0; box-sizing: border-box; width: 100%; }
+        button { background: #ff0000; color: white; border: none; font-weight: bold; cursor: pointer; border-radius: 4px; width: auto; padding: 10px 20px; }
+        button:hover { background: #cc0000; }
+        .form-group { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 15px; }
         
-        .card-like-badge {
-            position: absolute; top: 8px; right: 8px; background: rgba(232, 62, 140, 0.9);
-            color: white; font-size: 11px; font-weight: bold; padding: 3px 8px; border-radius: 12px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2); z-index: 2;
-        }
+        /* Upload Progress Bar Styling */
+        .progress-bar-container { width: 100%; background: #e0e0e0; border-radius: 6px; height: 22px; margin-top: 10px; overflow: hidden; display: none; position: relative; }
+        .progress-bar-fill { height: 100%; background: #ff0000; width: 0%; transition: width 0.1s ease; }
+        .progress-bar-text { position: absolute; width: 100%; top: 0; left: 0; text-align: center; font-size: 12px; font-weight: bold; line-height: 22px; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
 
-        .card-details { padding: 10px; }
-        .card-title { font-size: 14px; font-weight: bold; color: #333; text-overflow: ellipsis; white-space: nowrap; overflow: hidden; display: flex; align-items: center; }
-        .card-title .title-duration { font-weight: normal; color: #777; font-family: monospace; font-size: 12px; background: #eee; padding: 2px 5px; border-radius: 3px; margin-right: 8px; flex-shrink: 0; }
-        .card-creator { font-size: 12px; color: #666; margin-top: 4px; text-overflow: ellipsis; white-space: nowrap; overflow: hidden; }
+        .channel-header { background: white; padding: 30px; border-radius: 8px; text-align: center; margin-bottom: 25px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); transition: background 0.3s, color 0.3s; }
+        .channel-header .pfp-avatar { width: 90px; height: 90px; font-size: 36px; margin: 0 auto 15px auto; }
+        .loader { text-align: center; padding: 40px; font-weight: bold; color: #666; font-size: 18px; }
+        #authStatus { font-weight: bold; color: #0066cc; }
 
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); display: flex; justify-content: center; align-items: center; z-index: 100; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
-        .modal-overlay.open { opacity: 1; pointer-events: auto; }
-        .modal-content { background: white; padding: 30px; border-radius: 8px; max-width: 500px; width: 90%; box-shadow: 0 5px 15px rgba(0,0,0,0.3); text-align: left; position: relative; }
-        .close-modal-btn { font-family: inherit; margin-top: 20px; background-color: #6c757d; color: white; border: none; padding: 8px 16px; font-weight: bold; border-radius: 4px; cursor: pointer; float: right; }
+        .vibe-banner { background: linear-gradient(135deg, #ff4e50, #f9d423); color: white; padding: 12px 20px; border-radius: 8px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+        .vibe-banner span { font-weight: bold; font-size: 14px; text-shadow: 0 1px 2px rgba(0,0,0,0.2); }
+        .vibe-btn { background: rgba(255, 255, 255, 0.3); border: 1px solid white; color: white; padding: 6px 14px; border-radius: 20px; cursor: pointer; font-size: 13px; font-weight: bold; transition: background 0.2s; }
+        .vibe-btn:hover { background: rgba(255, 255, 255, 0.5); }
+        
+        .upload-tabs { display: flex; gap: 10px; margin-bottom: 15px; }
+        .upload-tab-btn { background: #ddd; color: #333; flex: 1; }
+        .upload-tab-btn.active-tab { background: #ff0000; color: #fff; }
 
-        /* 🛡️ Rate Limiter Screen CSS Overlay */
-        .rate-limit-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #fff;
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
-            z-index: 9999; color: #d9534f; text-align: center; padding: 20px; font-family: "Comic Sans MS", "Comic Sans", sans-serif;
-        }
-        .rate-limit-overlay h2 { font-size: 28px; margin-bottom: 10px; }
-        .rate-limit-overlay p { font-size: 18px; color: #333; max-width: 600px; line-height: 1.5; }
+        .color-picker-row { display: flex; align-items: center; justify-content: space-between; margin: 8px 0; }
+        .color-picker-row label { font-size: 14px; font-weight: bold; }
+        .color-picker-row input[type="color"] { width: 60px; height: 35px; border: none; cursor: pointer; background: none; }
     </style>
 </head>
 <body>
 
-    <div class="ai-credits">✨ Co-Authored by Google's Crappy Ai</div>
-
-    <h1>@DemoReviewTv And @The Red Guy's New Shiny Website!!</h1>
-
-    <div class="search-container">
-        <input type="text" id="search" placeholder="Search This Tiny Server!" disabled oninput="filterVideos()">
-        <div id="results" class="results"></div>
-    </div>
-
-    <div class="top-nav">
-        <a href="https://forms.gle/FEpwiv7j2uGquxbY9" target="_blank" class="forms-btn">Upload Video!</a>
-        <a href="https://forms.gle/fiyaRZ3CMZSGi5JQ7" target="_blank" class="forms-btn">Change Your Username.</a>
-        <button class="about-btn" onclick="openAboutModal()">About This Site</button>
-    </div>
-
-    <div id="videoWrapper" class="video-wrapper">
-        <video id="player" controls autoplay controlsList="nodownload" disablePictureInPicture oncontextmenu="return false;"></video>
-    </div>
-    
-    <div class="info-container">
-        <p class="status-msg" id="status">Syncing directly with GitHub storage...</p>
-    </div>
-
-    <div class="actions-wrapper">
-        <a id="downloadBtn" href="#" download class="download-btn">Download Video</a>
-        <button id="loopBtn" class="loop-btn" onclick="toggleLoop()"><span id="loopText">Looping: OFF</span></button>
-        <button id="likeBtn" class="like-btn" onclick="toggleLike()"><span>Like Video 👍</span></button>
-        <button id="resetBtn" class="reset-btn" onclick="resetPlayer()">Go Back</button>
-        
-        <div id="volumeControl" class="volume-container">
-            <span>Vol:</span>
-            <input type="range" id="volumeSlider" class="volume-slider" min="0" max="1" step="0.05" value="1" oninput="changeVolume(this.value)">
+    <header>
+        <h1 onclick="switchView('homeView')">📺FREEVID</h1>
+        <div>
+            <!-- Clickable custom channel name in top right -->
+            <span id="authStatusContainer" style="margin-right: 15px; font-size: 14px;">
+                <span id="authStatus" style="font-weight: bold; color: #0066cc;">Not Logged In</span>
+            </span>
+            <button onclick="switchView('homeView')">Home</button>
+            <button onclick="switchView('shortsView')">Shorts</button>
+            <button onclick="switchView('authView')" id="authNavBtn">Account</button>
+            <button onclick="switchView('uploadView')" id="uploadNavBtn" style="display:none;">Upload</button>
         </div>
-    </div>
+    </header>
 
-    <div id="likedSection" class="creator-section" style="margin-top: 20px; display: none;">
-        <div class="section-header-container">
-            <h2>Liked Videos ❤️</h2>
-        </div>
-        <div id="likedThumbnailGrid" class="thumbnail-grid"></div>
-    </div>
+    <div class="container">
 
-    <div id="creatorSection" class="creator-section">
-        <div class="section-header-container">
-            <h2 id="creatorHeader">Discover Videos</h2>
-            <button id="rerollBtn" class="reroll-btn" onclick="handleRerollClick()">Reroll</button>
-        </div>
-        <div id="thumbnailGrid" class="thumbnail-grid"></div>
-    </div>
-
-    <div id="aboutModal" class="modal-overlay" onclick="closeAboutModal(event)">
-        <div class="modal-content">
-            <h2>About FREEVID!!</h2>
-            <p>Welcome to Freevid!</p>
-            <button class="close-modal-btn" onclick="document.getElementById('aboutModal').classList.remove('open')">Close</button>
-        </div>
-    </div>
-
-    <script>
-        /* 🛡️ ANTI-RELOAD SPAM PROTECTION SYSTEM */
-        (function checkRateLimit() {
-            const now = Date.now();
-            const ONE_MINUTE = 60000;
-            
-            const lockExpires = localStorage.getItem('freevid_lock_time');
-            if (lockExpires && now < parseInt(lockExpires)) {
-                showRateLimitScreen();
-                return;
-            }
-
-            let reloadHistory = JSON.parse(localStorage.getItem('freevid_reload_history') || '[]');
-            reloadHistory = reloadHistory.filter(timestamp => (now - timestamp) < ONE_MINUTE);
-            reloadHistory.push(now);
-            localStorage.setItem('freevid_reload_history', JSON.stringify(reloadHistory));
-
-            if (reloadHistory.length > 10) {
-                localStorage.setItem('freevid_lock_time', (now + ONE_MINUTE).toString());
-                showRateLimitScreen();
-            }
-        })();
-
-        function showRateLimitScreen() {
-            document.body.innerHTML = `
-                <div class="rate-limit-overlay">
-                    <h2>Connection Blocked</h2>
-                    <p>You have connected too many times in one minute, you have been suspended from connecting for one minute.</p>
+        <!-- HOME FEED -->
+        <div id="homeView" class="view active">
+            <div class="vibe-banner">
+                <span>🎵 Set the Vibe (Chill Background Beats)</span>
+                <div>
+                    <button class="vibe-btn" onclick="toggleVibeMusic()" id="vibeToggleBtn">Play Vibe</button>
                 </div>
-            `;
-            window.stop(); 
-            throw new Error("Execution suspended due to rapid reloads.");
-        }
+            </div>
+            <audio id="vibeAudio" loop src="https://stream.zeno.fm/f3wvbbqmdg8uv"></audio>
 
-        // 🔗 Fixed updated API endpoints to use correct repo (freevidv1) and branch (Videos)
-        const GITHUB_API_URL = "https://api.github.com/repos/demoreviewtv-png/freevidv1/contents/videos?ref=Videos";
-        const VIDEO_FOLDER = "https://raw.githubusercontent.com/demoreviewtv-png/freevidv1/Videos/videos/";
-        const THUMBNAIL_FOLDER = "https://raw.githubusercontent.com/demoreviewtv-png/freevidv1/Videos/videos/thumbnails/";
+            <h2>Recommended Videos</h2>
+            <div id="videoGrid" class="video-grid"></div>
+        </div>
 
-        let serverVideos = [];
-        let currentlyPlayingTitle = "";
-        let currentlyPlayingCreator = "";
-        let currentlyPlayingFilename = ""; 
+        <!-- SHORTS FEED -->
+        <div id="shortsView" class="view">
+            <h2>Shorts</h2>
+            <div id="shortsContainer" class="shorts-container"></div>
+        </div>
 
-        function formatDuration(seconds) {
-            if (isNaN(seconds) || seconds === Infinity || seconds <= 0) return "";
-            const hrs = Math.floor(seconds / 3600);
-            const mins = Math.floor((seconds % 3600) / 60);
-            const secs = Math.floor(seconds % 60);
-            return hrs > 0 ? `${hrs}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}` : `${mins}:${secs.toString().padStart(2, '0')}`;
-        }
+        <!-- CHANNEL PAGE VIEW -->
+        <div id="channelView" class="view">
+            <button onclick="switchView('homeView')">← Back to Feed</button>
+            <div class="channel-header" id="channelHeaderBox">
+                <div id="channelPageAvatar"></div>
+                <h2 id="channelPageTitle" style="margin: 5px 0 0 0;"></h2>
+            </div>
+            <h3>Uploaded Videos</h3>
+            <div id="channelVideoGrid" class="video-grid"></div>
+        </div>
 
-        function getCleanName(filename) {
-            return filename.replace(/\.[^/.]+$/, "").replace("[Downloadable]", "").replace("[AutoLoop]", "").replace(/\b\d{1,2}:\d{2}(?::\d{2})?\b/g, "").replace(/\[.*?\]/g, "").replace(/\s+/g, " ").trim();
-        }
+        <!-- ACCOUNT & CHANNEL SETUP VIEW -->
+        <div id="authView" class="view">
+            <div class="form-group" id="loginBox">
+                <h2>Account Login / Sign Up</h2>
+                <input type="email" id="authEmail" placeholder="Email">
+                <input type="password" id="authPassword" placeholder="Password">
+                <button onclick="handleSignUp()">Register New Account</button>
+                <button onclick="handleLogin()" style="background: #0066cc;">Log In</button>
+            </div>
 
-        function parseVideoMeta(filename) {
-            const cleanName = getCleanName(filename);
-            if (cleanName.includes(" - ")) {
-                const parts = cleanName.split(" - ");
-                return { title: parts[0].trim(), creator: parts[1].trim() };
-            }
-            return { title: cleanName, creator: "Unknown Creator" };
-        }
-
-        async function fetchVideoList() {
-            const status = document.getElementById('status');
-            
-            try {
-                // Route 1: Primary Github API query
-                status.textContent = "Syncing directly with GitHub storage...";
-                const response = await fetch(GITHUB_API_URL);
-                const items = await response.json();
+            <div class="form-group" id="channelSetupBox" style="display:none;">
+                <h2>Your Channel Customization</h2>
+                <p>Logged in Channel: <strong id="currentUserEmail"></strong></p>
                 
-                if (Array.isArray(items)) {
-                    processSyncedVideos(items.filter(item => item.type === 'file').map(item => item.name));
-                    return;
-                }
-                throw new Error("API Limit or Format discrepancy triggered");
+                <label>Channel Name:</label>
+                <input type="text" id="desiredChannelName" placeholder="Enter your channel name">
+
+                <label>Change Profile Picture:</label>
+                <input type="file" id="pfpFile" accept="image/*"><br>
+
+                <h3 style="margin-top: 20px;">Page Theme Customizer</h3>
+                <div class="color-picker-row">
+                    <label>Page Background Color:</label>
+                    <input type="color" id="themeBgColor" value="#f9f9f9">
+                </div>
+                <div class="color-picker-row">
+                    <label>Header / Banner Box Color:</label>
+                    <input type="color" id="themeHeaderColor" value="#ffffff">
+                </div>
+                <div class="color-picker-row">
+                    <label>Main Text Color:</label>
+                    <input type="color" id="themeTextColor" value="#111111">
+                </div>
+                <div class="color-picker-row">
+                    <label>Accent / Title Color:</label>
+                    <input type="color" id="themeAccentColor" value="#ff0000">
+                </div>
+
+                <button onclick="saveChannelProfile()" style="margin-top: 15px;">Save Channel & Theme</button>
+            </div>
+            <p id="authStatusText" style="font-weight: bold;"></p>
+        </div>
+
+        <!-- UPLOAD VIEW -->
+        <div id="uploadView" class="view">
+            <div class="form-group">
+                <h2>Publish a Video</h2>
+                <p>Posting as Channel: <strong id="uploaderDisplayHandle">Checking channel...</strong></p>
                 
-            } catch (err) {
-                // Route 2: Fallback jsDelivr scrapers with updated paths
-                status.textContent = "Primary connection busy. Switching to Fallback Storage Server...";
-                try {
-                    const altRes = await fetch("https://cdn.jsdelivr.net/gh/demoreviewtv-png/freevidv1@Videos/videos/");
-                    if(altRes.ok) {
-                        const htmlText = await altRes.text();
-                        const matches = htmlText.match(/href="([^"]+\.(mp4|webm|mkv|avi))"/gi);
-                        if(matches) {
-                            const scrapedFiles = matches.map(m => decodeURIComponent(m.replace('href="', '').replace('"', '')));
-                            processSyncedVideos(scrapedFiles);
-                            status.textContent = `Successfully synced via Fallback Cache! (${serverVideos.length} videos found)`;
-                            return;
-                        }
-                    }
-                    
-                    status.textContent = "Server heavily loaded. Retrying automatically in 5 seconds...";
-                    setTimeout(fetchVideoList, 5000);
-                } catch(fallbackErr) {
-                    status.textContent = "Connection timed out. Please try refreshing in a moment.";
+                <div class="upload-tabs">
+                    <button class="upload-tab-btn active-tab" id="fileTabBtn" onclick="switchUploadMode('file')">Upload File</button>
+                    <button class="upload-tab-btn" id="linkTabBtn" onclick="switchUploadMode('link')">Import via .mp4 Link</button>
+                </div>
+
+                <input type="text" id="videoName" placeholder="Video Title">
+
+                <!-- File Upload Mode Section -->
+                <div id="fileUploadSection">
+                    <label>Select Video File:</label>
+                    <input type="file" id="videoFile" accept="video/*"><br>
+                    <button onclick="uploadVideoFile()" id="publishFileBtn">Publish Video File</button>
+                </div>
+
+                <!-- Link Import Mode Section -->
+                <div id="linkUploadSection" style="display:none;">
+                    <label>Direct .mp4 Video URL Link:</label>
+                    <input type="url" id="videoUrlInput" placeholder="https://example.com/video.mp4"><br>
+                    <button onclick="importVideoLink()" id="publishLinkBtn" style="background: #0066cc;">Import & Publish Link</button>
+                </div>
+
+                <p id="status" style="font-weight: bold; margin-top: 10px;"></p>
+                
+                <!-- Dedicated Upload Progress Bar Elements -->
+                <div id="progressBarContainer" class="progress-bar-container">
+                    <div id="progressBarFill" class="progress-bar-fill"></div>
+                    <div id="progressBarText" class="progress-bar-text">0%</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- WATCH VIEW -->
+        <div id="watchView" class="view">
+            <button onclick="switchView('homeView')">← Back to Feed</button>
+            <h2 id="watchTitle"></h2>
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">
+                <div id="watchPfpContainer"></div>
+                <p id="watchChannel" class="channel-name" style="margin: 0; font-size: 16px; font-weight: bold;"></p>
+            </div>
+            
+            <!-- Video Player Wrapper with Custom Controls and Contain Scaling -->
+            <div class="video-player-wrapper" id="playerWrapper">
+                <div id="videoLoadingOverlay" class="video-loading-overlay">
+                    <div id="videoLoadingText" class="load-bar-text">Loading video chunks (0%)</div>
+                    <div class="load-bar-track">
+                        <div id="videoLoadingFill" class="load-bar-fill"></div>
+                    </div>
+                </div>
+                
+                <video id="videoPlayer" class="custom-video" playsinline></video>
+                
+                <!-- Custom Control Bar -->
+                <div class="custom-controls-bar" id="customControls">
+                    <div class="control-timeline-track" id="timelineTrack">
+                        <div class="control-timeline-fill" id="timelineFill"></div>
+                    </div>
+                    <div class="control-row">
+                        <div class="control-row-left">
+                            <button class="ctrl-btn" id="playPauseBtn" onclick="togglePlayPause()">▶ Play</button>
+                            <button class="ctrl-btn" id="muteBtn" onclick="toggleMute()">🔊</button>
+                            <span class="time-display" id="timeDisplay">0:00 / 0:00</span>
+                        </div>
+                        <div class="control-row-right">
+                            <button class="ctrl-btn" onclick="toggleFullscreen()">⛶ Fullscreen</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="comments-section">
+                <h3>Comments</h3>
+                <input type="text" id="commentUser" placeholder="Your Name">
+                <textarea id="commentText" placeholder="Add a comment..."></textarea>
+                <button onclick="postComment()">Post Comment</button>
+                <div id="commentsList" style="margin-top: 15px;"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Firebase SDK Scripts -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getDatabase, ref, set, get, child, push, onChildAdded } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCZwwg8vlYo3LV_k4I9BydIcbKkU_xO9a8",
+            authDomain: "file-share-a5d42.firebaseapp.com",
+            databaseURL: "https://file-share-a5d42-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "file-share-a5d42",
+            storageBucket: "file-share-a5d42.firebasestorage.app",
+            messagingSenderId: "777628771847",
+            appId: "1:777628771847:web:541e1ba1b4123fd273aca2",
+            measurementId: "G-6JYDD5G7S4"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const database = getDatabase(app);
+        const CHUNK_SIZE = 1 * 1024 * 1024; // 1MB chunks
+
+        let loggedInUser = null;
+        let userChannelKey = null;
+        let activeVideoId = null;
+
+        const videoPlayer = document.getElementById('videoPlayer');
+        const playPauseBtn = document.getElementById('playPauseBtn');
+        const muteBtn = document.getElementById('muteBtn');
+        const timelineTrack = document.getElementById('timelineTrack');
+        const timelineFill = document.getElementById('timelineFill');
+        const timeDisplay = document.getElementById('timeDisplay');
+        const playerWrapper = document.getElementById('playerWrapper');
+
+        window.addEventListener('DOMContentLoaded', () => {
+            loadHomeFeed();
+
+            videoPlayer.addEventListener('timeupdate', () => {
+                if (!videoPlayer.duration) return;
+                const pct = (videoPlayer.currentTime / videoPlayer.duration) * 100;
+                timelineFill.style.width = pct + '%';
+                timeDisplay.innerText = `${formatTime(videoPlayer.currentTime)} / ${formatTime(videoPlayer.duration)}`;
+            });
+
+            videoPlayer.addEventListener('play', () => { playPauseBtn.innerText = "⏸ Pause"; });
+            videoPlayer.addEventListener('pause', () => { playPauseBtn.innerText = "▶ Play"; });
+
+            timelineTrack.addEventListener('click', (e) => {
+                const rect = timelineTrack.getBoundingClientRect();
+                const pos = (e.clientX - rect.left) / rect.width;
+                if (videoPlayer.duration) {
+                    videoPlayer.currentTime = pos * videoPlayer.duration;
                 }
-            }
+            });
+        });
+
+        function formatTime(seconds) {
+            const m = Math.floor(seconds / 60);
+            const s = Math.floor(seconds % 60);
+            return `${m}:${s < 10 ? '0' : ''}${s}`;
         }
 
-        function processSyncedVideos(videoArray) {
-            const searchInput = document.getElementById('search');
-            const status = document.getElementById('status');
-            
-            // Filters down and eliminates folder listings like 'thumbnails'
-            serverVideos = videoArray.filter(name => /\.(mp4|webm|mkv|avi)$/i.test(name));
-
-            if (serverVideos.length > 0) {
-                status.textContent = `Successfully synced! (${serverVideos.length} videos found)`;
-                searchInput.disabled = false;
-                showRandomVideos();
-                renderLikedVideosGrid();
+        window.togglePlayPause = function() {
+            if (videoPlayer.paused) {
+                videoPlayer.play();
             } else {
-                status.textContent = "Connected to storage, but no compatible videos found inside /videos.";
+                videoPlayer.pause();
             }
         }
 
-        function selectVideo(video) {
-            const meta = parseVideoMeta(video);
-            const videoSrc = VIDEO_FOLDER + encodeURIComponent(video);
-            const dlBtn = document.getElementById('downloadBtn');
-            const loopBtn = document.getElementById('loopBtn');
-            const likeBtn = document.getElementById('likeBtn');
-            const resetBtn = document.getElementById('resetBtn');
-            const volumeCtrl = document.getElementById('volumeControl');
-            const player = document.getElementById('player');
-
-            currentlyPlayingTitle = meta.title;
-            currentlyPlayingCreator = meta.creator;
-            currentlyPlayingFilename = video;
-
-            player.src = videoSrc;
-            document.getElementById('videoWrapper').style.display = "flex";
-            document.getElementById('search').value = meta.title;
-            document.getElementById('status').textContent = "Now playing: " + meta.title;
-            
-            player.loop = video.includes("[AutoLoop]");
-            loopBtn.classList.toggle('active', player.loop);
-            document.getElementById('loopText').textContent = player.loop ? "Looping: ON" : "Looping: OFF";
-            loopBtn.style.display = "inline-flex";
-
-            if (video.includes("[Downloadable]")) {
-                dlBtn.href = videoSrc;
-                dlBtn.setAttribute("download", video);
-                dlBtn.style.display = "inline-flex";
-            } else { dlBtn.style.display = "none"; }
-            
-            updateLikeButtonUI();
-            likeBtn.style.display = "inline-flex";
-            resetBtn.style.display = "inline-flex";
-            volumeCtrl.style.display = "inline-flex"; 
-            
-            document.getElementById('volumeSlider').value = player.volume;
-
-            if (meta.creator && meta.creator !== "Unknown Creator") { showCreatorGrid(meta.creator); } else { showRandomVideos(); }
+        window.toggleMute = function() {
+            videoPlayer.muted = !videoPlayer.muted;
+            muteBtn.innerText = videoPlayer.muted ? "🔇" : "🔊";
         }
 
-        document.getElementById('player').addEventListener('loadedmetadata', function() {
-            const trueDuration = formatDuration(this.duration);
-            if (trueDuration && currentlyPlayingTitle) {
-                const fullDisplay = `[${trueDuration}] ${currentlyPlayingTitle}`;
-                document.getElementById('search').value = fullDisplay;
-                document.getElementById('status').textContent = "Now playing: " + fullDisplay;
+        window.toggleFullscreen = function() {
+            if (!document.fullscreenElement) {
+                playerWrapper.requestFullscreen().catch(err => {
+                    alert("Error attempting to enable fullscreen: " + err.message);
+                });
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        window.toggleVibeMusic = function() {
+            const audio = document.getElementById('vibeAudio');
+            const btn = document.getElementById('vibeToggleBtn');
+            if (audio.paused) {
+                audio.play().then(() => {
+                    btn.innerText = "Pause Vibe";
+                }).catch(e => alert("Click to enable vibe audio playback."));
+            } else {
+                audio.pause();
+                btn.innerText = "Play Vibe";
+            }
+        }
+
+        window.switchUploadMode = function(mode) {
+            const fileBtn = document.getElementById('fileTabBtn');
+            const linkBtn = document.getElementById('linkTabBtn');
+            const fileSec = document.getElementById('fileUploadSection');
+            const linkSec = document.getElementById('linkUploadSection');
+
+            if (mode === 'file') {
+                fileBtn.classList.add('active-tab');
+                linkBtn.classList.remove('active-tab');
+                fileSec.style.display = 'block';
+                linkSec.style.display = 'none';
+            } else {
+                linkBtn.classList.add('active-tab');
+                fileBtn.classList.remove('active-tab');
+                linkSec.style.display = 'block';
+                fileSec.style.display = 'none';
+            }
+        }
+
+        window.switchView = function(viewId) {
+            if (document.getElementById('watchView').classList.contains('active') && viewId !== 'watchView') {
+                videoPlayer.pause();
+                videoPlayer.currentTime = 0;
+                videoPlayer.src = "";
+            }
+
+            if (viewId !== 'channelView') {
+                document.getElementById('channelView').style.backgroundColor = "";
+                document.getElementById('channelView').style.color = "";
+                document.getElementById('channelHeaderBox').style.backgroundColor = "";
+                document.getElementById('channelHeaderBox').style.color = "";
+            }
+
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.getElementById(viewId).classList.add('active');
+            
+            const audio = document.getElementById('vibeAudio');
+            if (viewId !== 'homeView' && !audio.paused) {
+                audio.pause();
+                document.getElementById('vibeToggleBtn').innerText = "Play Vibe";
+            }
+
+            if(viewId === 'homeView') loadHomeFeed();
+            if(viewId === 'shortsView') loadShortsFeed();
+        }
+
+        function stringToColor(str) {
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                hash = str.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            let color = '#';
+            for (let i = 0; i < 3; i++) {
+                let value = (hash >> (i * 8)) & 0xFF;
+                color += ('00' + value.toString(16)).slice(-2);
+            }
+            return color;
+        }
+
+        function renderPfpElement(name, pfpUrl, size = 50) {
+            const initial = name ? name.charAt(0).toUpperCase() : "?";
+            const style = `width: ${size}px; height: ${size}px; font-size: ${size === 50 ? 20 : 36}px;`;
+            if (pfpUrl && pfpUrl.startsWith("data:image")) {
+                return `<img src="${pfpUrl}" class="pfp-avatar" style="${style}" alt="pfp" loading="eager">`;
+            } else {
+                const bgColor = stringToColor(name || "User");
+                return `<div class="pfp-avatar" style="${style} background-color: ${bgColor};">${initial}</div>`;
+            }
+        }
+
+        async function syncUserChannel(user) {
+            const channelsSnap = await get(child(ref(database), 'channels'));
+            userChannelKey = null;
+            let channelNameVal = "";
+            
+            if(channelsSnap.exists()) {
+                channelsSnap.forEach((chanSnap) => {
+                    if(chanSnap.val().ownerUid === user.uid) {
+                        userChannelKey = chanSnap.key;
+                        channelNameVal = chanSnap.val().name || user.email.split('@')[0];
+                        document.getElementById('desiredChannelName').value = chanSnap.val().name || "";
+                        
+                        const theme = chanSnap.val().theme || {};
+                        document.getElementById('themeBgColor').value = theme.bgColor || "#f9f9f9";
+                        document.getElementById('themeHeaderColor').value = theme.headerColor || "#ffffff";
+                        document.getElementById('themeTextColor').value = theme.textColor || "#111111";
+                        document.getElementById('themeAccentColor').value = theme.accentColor || "#ff0000";
+                    }
+                });
+            }
+
+            const authStatusEl = document.getElementById('authStatus');
+            if (userChannelKey) {
+                authStatusEl.innerHTML = `<span style="cursor: pointer; color: #0066cc; text-decoration: underline; font-weight: bold;" onclick="openChannelPage('${userChannelKey}', '${escapeHtml(channelNameVal)}')">${escapeHtml(channelNameVal)}</span>`;
+            } else {
+                const defaultName = user.email.split('@')[0];
+                authStatusEl.innerHTML = `<span>${escapeHtml(defaultName)} (⚠️ Channel Uninitialized)</span>`;
+            }
+
+            const handleText = userChannelKey ? channelNameVal : "⚠️ Setup Channel in Account Tab First";
+            document.getElementById('uploaderDisplayHandle').innerText = handleText;
+        }
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                loggedInUser = user;
+                document.getElementById('authNavBtn').innerText = "Account";
+                document.getElementById('loginBox').style.display = 'none';
+                
+                await syncUserChannel(user);
+                const channelsSnap = await get(child(ref(database), 'channels'));
+                let foundName = user.email.split('@')[0];
+                if(channelsSnap.exists()) {
+                    channelsSnap.forEach((chanSnap) => {
+                        if(chanSnap.val().ownerUid === user.uid && chanSnap.val().name) {
+                            foundName = chanSnap.val().name;
+                        }
+                    });
+                }
+                document.getElementById('currentUserEmail').innerText = foundName;
+
+                document.getElementById('channelSetupBox').style.display = 'block';
+                document.getElementById('uploadNavBtn').style.display = 'inline-block';
+            } else {
+                loggedInUser = null;
+                userChannelKey = null;
+                document.getElementById('authStatus').innerHTML = "Not Logged In";
+                document.getElementById('authNavBtn').innerText = "Account";
+                document.getElementById('loginBox').style.display = 'block';
+                document.getElementById('channelSetupBox').style.display = 'none';
+                document.getElementById('uploadNavBtn').style.display = 'none';
             }
         });
 
-        function toggleLoop() {
-            const player = document.getElementById('player');
-            if (player.src) {
-                player.loop = !player.loop;
-                document.getElementById('loopBtn').classList.toggle('active', player.loop);
-                document.getElementById('loopText').textContent = player.loop ? "Looping: ON" : "Looping: OFF";
-            }
-        }
-
-        function getLikedVideos() {
-            return JSON.parse(localStorage.getItem('freevid_liked_videos') || '[]');
-        }
-
-        function toggleLike() {
-            if (!currentlyPlayingFilename) return;
-            let likedList = getLikedVideos();
-            const index = likedList.indexOf(currentlyPlayingFilename);
-
-            if (index > -1) {
-                likedList.splice(index, 1); 
-            } else {
-                likedList.push(currentlyPlayingFilename); 
-            }
-
-            localStorage.setItem('freevid_liked_videos', JSON.stringify(likedList));
-            updateLikeButtonUI();
-            
-            if (currentlyPlayingCreator && currentlyPlayingCreator !== "Unknown Creator") {
-                showCreatorGrid(currentlyPlayingCreator);
-            } else {
-                showRandomVideos();
-            }
-            renderLikedVideosGrid();
-        }
-
-        function updateLikeButtonUI() {
-            const likeBtn = document.getElementById('likeBtn');
-            const likedList = getLikedVideos();
-            const isLiked = likedList.includes(currentlyPlayingFilename);
-
-            likeBtn.classList.toggle('liked', isLiked);
-            likeBtn.querySelector('span').textContent = isLiked ? "Liked ❤️" : "Like Video 👍";
-        }
-
-        function changeVolume(val) {
-            const player = document.getElementById('player');
-            player.volume = val;
-        }
-
-        function handleRerollClick() {
-            const player = document.getElementById('player');
-            if (player.src && currentlyPlayingCreator && currentlyPlayingCreator !== "Unknown Creator") {
-                showCreatorGrid(currentlyPlayingCreator);
-            } else {
-                showRandomVideos();
-            }
-        }
-
-        function showRandomVideos() {
-            document.getElementById('creatorHeader').textContent = "Discover Videos";
-            const shuffled = [...serverVideos].sort(() => 0.5 - Math.random());
-            buildGridCards(shuffled.slice(0, 9), "thumbnailGrid");
-        }
-
-        function showCreatorGrid(creatorName) {
-            document.getElementById('creatorHeader').textContent = `More Videos From: ${creatorName}`;
-            const matches = serverVideos.filter(video => parseVideoMeta(video).creator.toLowerCase() === creatorName.toLowerCase());
-            buildGridCards(matches, "thumbnailGrid");
-        }
-
-        function renderLikedVideosGrid() {
-            const likedList = getLikedVideos().filter(v => serverVideos.includes(v));
-            const likedSection = document.getElementById('likedSection');
-            if (likedList.length > 0) {
-                likedSection.style.display = "block";
-                buildGridCards(likedList, "likedThumbnailGrid");
-            } else {
-                likedSection.style.display = "none";
-            }
-        }
-
-        function buildGridCards(videoList, targetGridId) {
-            const grid = document.getElementById(targetGridId);
-            const likedList = getLikedVideos();
-            grid.innerHTML = ""; 
-
-            videoList.forEach(video => {
-                const meta = parseVideoMeta(video);
-                const videoSrc = VIDEO_FOLDER + encodeURIComponent(video);
-                const baseName = video.replace(/\.[^/.]+$/, "");
-                const card = document.createElement('div');
-                card.className = "video-card";
-                card.onclick = () => { selectVideo(video); window.scrollTo({ top: 0, behavior: 'smooth' }); };
-
-                if (likedList.includes(video) && targetGridId !== "likedThumbnailGrid") {
-                    const badge = document.createElement('div');
-                    badge.className = "card-like-badge";
-                    badge.textContent = "❤️ Liked";
-                    card.appendChild(badge);
-                }
-
-                const previewDiv = document.createElement('div');
-                previewDiv.className = "thumb-preview";
-                const thumbImage = document.createElement('img');
-                thumbImage.src = `${THUMBNAIL_FOLDER}${encodeURIComponent(baseName)}.jpg`;
-                thumbImage.onerror = function() {
-                    if (this.src.endsWith('.jpg')) this.src = `${THUMBNAIL_FOLDER}${encodeURIComponent(baseName)}.png`;
-                    else this.src = `${THUMBNAIL_FOLDER}DEFAULT-THUMBNAIL.png`;
-                };
-                previewDiv.appendChild(thumbImage);
-
-                const hiddenMetaVideo = document.createElement('video');
-                hiddenMetaVideo.src = videoSrc + "#t=0.1";
-                hiddenMetaVideo.preload = "metadata";
-                hiddenMetaVideo.muted = true;
-
-                const detailsDiv = document.createElement('div');
-                detailsDiv.className = "card-details";
-                const titleDiv = document.createElement('div');
-                titleDiv.className = "card-title";
-
-                hiddenMetaVideo.addEventListener('loadedmetadata', function() {
-                    const trueDuration = formatDuration(this.duration);
-                    if (trueDuration) {
-                        const dSpan = document.createElement('span');
-                        dSpan.className = "title-duration";
-                        dSpan.textContent = trueDuration;
-                        titleDiv.insertBefore(dSpan, titleDiv.firstChild);
-                    }
+        window.handleSignUp = async function() {
+            const email = document.getElementById('authEmail').value.trim();
+            const pass = document.getElementById('authPassword').value;
+            if(!email) { alert("Please provide an email."); return; }
+            try {
+                const cred = await createUserWithEmailAndPassword(auth, email, pass);
+                const channelKey = email.replace(/[^a-zA-Z0-9_]/g, "");
+                await set(ref(database, `channels/${channelKey}`), {
+                    ownerUid: cred.user.uid,
+                    name: email.split('@')[0],
+                    pfp: "",
+                    theme: { bgColor: "#f9f9f9", headerColor: "#ffffff", textColor: "#111111", accentColor: "#ff0000" },
+                    createdAt: Date.now()
                 });
-                
-                const tSpan = document.createElement('span'); tSpan.textContent = meta.title; titleDiv.appendChild(tSpan);
-                const creatorDiv = document.createElement('div'); creatorDiv.className = "card-creator";
-                creatorDiv.textContent = meta.creator;
+                alert("Account and channel created successfully!");
+            } catch (err) { alert(err.message); }
+        }
 
-                detailsDiv.appendChild(titleDiv); detailsDiv.appendChild(creatorDiv);
-                card.appendChild(previewDiv); card.appendChild(detailsDiv); grid.appendChild(card);
+        window.handleLogin = async function() {
+            const email = document.getElementById('authEmail').value;
+            const pass = document.getElementById('authPassword').value;
+            try {
+                await signInWithEmailAndPassword(auth, email, pass);
+                switchView('homeView');
+            } catch (err) { alert(err.message); }
+        }
+
+        window.saveChannelProfile = async function() {
+            if (!loggedInUser) {
+                alert("Please log in first.");
+                return;
+            }
+
+            const channelName = document.getElementById('desiredChannelName').value.trim();
+            if(!channelName) {
+                alert("Please provide a channel name.");
+                return;
+            }
+
+            const channelKey = loggedInUser.email.replace(/[^a-zA-Z0-9_]/g, "");
+            const pfpFile = document.getElementById('pfpFile').files[0];
+            const statusText = document.getElementById('authStatusText');
+
+            const theme = {
+                bgColor: document.getElementById('themeBgColor').value,
+                headerColor: document.getElementById('themeHeaderColor').value,
+                textColor: document.getElementById('themeTextColor').value,
+                accentColor: document.getElementById('themeAccentColor').value
+            };
+
+            statusText.innerText = "Saving profile and theme...";
+            
+            const channelsSnap = await get(child(ref(database), `channels/${channelKey}`));
+            let pfpData = "";
+            if (pfpFile) {
+                pfpData = await fileToBase64(pfpFile);
+            } else if (channelsSnap.exists()) {
+                pfpData = channelsSnap.val().pfp || "";
+            }
+
+            await set(ref(database, `channels/${channelKey}`), {
+                ownerUid: loggedInUser.uid,
+                name: channelName,
+                pfp: pfpData,
+                theme: theme,
+                createdAt: channelsSnap.exists() ? channelsSnap.val().createdAt : Date.now()
+            });
+
+            userChannelKey = channelKey;
+            await syncUserChannel(loggedInUser);
+            document.getElementById('currentUserEmail').innerText = channelName;
+            statusText.innerText = "Channel profile & themes saved!";
+            alert("Customized channel preferences saved successfully!");
+            switchView('homeView');
+        }
+
+        function fileToBase64(file) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result);
+                reader.readAsDataURL(file);
             });
         }
 
-        function filterVideos() {
-            const query = document.getElementById('search').value.toLowerCase();
-            const box = document.getElementById('results');
-            box.innerHTML = "";
-            if (!query) { box.style.display = "none"; return; }
-            const matches = serverVideos.filter(video => getCleanName(video).toLowerCase().includes(query));
-            if (matches.length > 0) {
-                box.style.display = "block";
-                matches.forEach(video => {
-                    const meta = parseVideoMeta(video);
-                    const div = document.createElement('div');
-                    div.textContent = meta.creator !== "Unknown Creator" ? `${meta.title} (by ${meta.creator})` : meta.title;
-                    div.onclick = () => { selectVideo(video); box.style.display = "none"; };
-                    box.appendChild(div);
+        window.uploadVideoFile = async function() {
+            if (!loggedInUser) {
+                alert("Please log in to upload videos.");
+                return;
+            }
+
+            userChannelKey = loggedInUser.email.replace(/[^a-zA-Z0-9_]/g, "");
+            const channelsSnap = await get(child(ref(database), `channels/${userChannelKey}`));
+            const channelName = channelsSnap.exists() && channelsSnap.val().name ? channelsSnap.val().name : loggedInUser.email.split('@')[0];
+
+            const file = document.getElementById('videoFile').files[0];
+            const videoNameInput = document.getElementById('videoName').value.trim();
+            const status = document.getElementById('status');
+            const publishBtn = document.getElementById('publishFileBtn');
+            const progressContainer = document.getElementById('progressBarContainer');
+            const progressFill = document.getElementById('progressBarFill');
+            const progressText = document.getElementById('progressBarText');
+
+            if (!file || !videoNameInput) {
+                alert("Provide both a video file and a title.");
+                return;
+            }
+
+            publishBtn.disabled = true;
+            progressContainer.style.display = 'block';
+            status.innerText = "Analyzing video specs...";
+            progressFill.style.width = '2%';
+            progressText.innerText = '2%';
+
+            try {
+                const videoCheckObj = document.createElement('video');
+                videoCheckObj.src = URL.createObjectURL(file);
+                
+                await new Promise((resolve) => {
+                    videoCheckObj.onloadedmetadata = () => resolve();
+                    videoCheckObj.onerror = () => resolve();
                 });
-            } else { box.style.display = "none"; }
+
+                const duration = videoCheckObj.duration || 0;
+                const width = videoCheckObj.videoWidth || 1;
+                const height = videoCheckObj.videoHeight || 1;
+                const isVerticalOrSquare = height >= width;
+                const isShort = (duration <= 120 && isVerticalOrSquare);
+
+                const sanitizedVideoTitle = videoNameInput.replace(/[^a-zA-Z0-9]/g, "");
+                if (!sanitizedVideoTitle) {
+                    alert("Please use alphanumeric characters for your video title.");
+                    publishBtn.disabled = false;
+                    progressContainer.style.display = 'none';
+                    return;
+                }
+
+                const videoId = sanitizedVideoTitle + "_" + Date.now();
+                
+                const thumbnail = await new Promise((resolve) => {
+                    const vid = document.createElement('video');
+                    vid.src = URL.createObjectURL(file);
+                    vid.muted = true;
+                    vid.onloadedmetadata = () => { vid.currentTime = 1; };
+                    vid.onseeked = () => {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = 320; canvas.height = 180;
+                        canvas.getContext('2d').drawImage(vid, 0, 0, 320, 180);
+                        resolve(canvas.toDataURL('image/jpeg', 0.8));
+                    };
+                    vid.onerror = () => resolve("");
+                });
+
+                status.innerText = "Preparing chunk upload...";
+                progressFill.style.width = '10%';
+                progressText.innerText = '10%';
+
+                let start = 0, index = 1;
+                const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
+                const chunkPromises = [];
+
+                while (start < file.size) {
+                    const chunkBlob = file.slice(start, start + CHUNK_SIZE);
+                    const currentIndex = index;
+                    
+                    const chunkPromise = fileToBase64(chunkBlob).then(async (base64Chunk) => {
+                        await set(ref(database, `video-data/${videoId}/Video-Chunk${currentIndex}`), base64Chunk);
+                        
+                        const currentDone = parseInt(progressFill.style.width) || 10;
+                        const increment = Math.max(1, Math.floor(80 / totalChunks));
+                        const newPct = Math.min(90, currentDone + increment);
+                        progressFill.style.width = newPct + '%';
+                        progressText.innerText = newPct + '%';
+                        status.innerText = `Uploading chunks (${currentIndex}/${totalChunks})...`;
+                    });
+
+                    chunkPromises.push(chunkPromise);
+                    start += CHUNK_SIZE;
+                    index++;
+                }
+
+                await Promise.all(chunkPromises);
+
+                status.innerText = "Finalizing upload...";
+                await Promise.all([
+                    set(ref(database, `video-details/${videoId}`), {
+                        "Video-name": videoNameInput,
+                        "Video-Thumbnail": thumbnail,
+                        "Video-Creator": channelName,
+                        "CreatorKey": userChannelKey,
+                        "isShort": isShort
+                    }),
+                    set(ref(database, `video-data/${videoId}/totalChunks`), totalChunks)
+                ]);
+
+                progressFill.style.width = '100%';
+                progressText.innerText = '100%';
+                status.innerText = "Upload complete!";
+                
+                setTimeout(() => {
+                    publishBtn.disabled = false;
+                    progressContainer.style.display = 'none';
+                    document.getElementById('videoName').value = "";
+                    document.getElementById('videoFile').value = "";
+                    alert(isShort ? "Short successfully published!" : "Video successfully published!");
+                    switchView(isShort ? 'shortsView' : 'homeView');
+                }, 400);
+
+            } catch (err) {
+                console.error(err);
+                alert("Upload failed: " + err.message);
+                publishBtn.disabled = false;
+                progressContainer.style.display = 'none';
+                status.innerText = "Error during upload.";
+            }
+        };
+
+        window.importVideoLink = async function() {
+            if (!loggedInUser) {
+                alert("Please log in to import videos.");
+                return;
+            }
+
+            userChannelKey = loggedInUser.email.replace(/[^a-zA-Z0-9_]/g, "");
+            const channelsSnap = await get(child(ref(database), `channels/${userChannelKey}`));
+            const channelName = channelsSnap.exists() && channelsSnap.val().name ? channelsSnap.val().name : loggedInUser.email.split('@')[0];
+
+            const videoUrl = document.getElementById('videoUrlInput').value.trim();
+            const videoNameInput = document.getElementById('videoName').value.trim();
+            const status = document.getElementById('status');
+            const publishBtn = document.getElementById('publishLinkBtn');
+
+            if (!videoUrl || !videoNameInput) {
+                alert("Provide both a direct .mp4 URL link and a title.");
+                return;
+            }
+
+            publishBtn.disabled = true;
+            status.innerText = "Validating and testing direct link...";
+
+            try {
+                const videoCheckObj = document.createElement('video');
+                videoCheckObj.crossOrigin = "anonymous";
+                videoCheckObj.src = videoUrl;
+
+                await new Promise((resolve, reject) => {
+                    videoCheckObj.onloadedmetadata = () => resolve();
+                    videoCheckObj.onerror = () => reject(new Error("Could not load video metadata. The URL might be broken, or CORS blocked the resource."));
+                });
+
+                const duration = videoCheckObj.duration || 0;
+                const width = videoCheckObj.videoWidth || 1;
+                const height = videoCheckObj.videoHeight || 1;
+                const isVerticalOrSquare = height >= width;
+                const isShort = (duration <= 120 && isVerticalOrSquare);
+
+                const sanitizedVideoTitle = videoNameInput.replace(/[^a-zA-Z0-9]/g, "");
+                if (!sanitizedVideoTitle) {
+                    alert("Please use alphanumeric characters for your video title.");
+                    publishBtn.disabled = false;
+                    return;
+                }
+
+                const videoId = sanitizedVideoTitle + "_" + Date.now();
+
+                status.innerText = "Generating thumbnail snapshot...";
+                const thumbnail = await new Promise((resolve) => {
+                    const vid = document.createElement('video');
+                    vid.crossOrigin = "anonymous";
+                    vid.src = videoUrl;
+                    vid.muted = true;
+                    vid.onloadedmetadata = () => { vid.currentTime = 1; };
+                    vid.onseeked = () => {
+                        try {
+                            const canvas = document.createElement('canvas');
+                            canvas.width = 320; canvas.height = 180;
+                            canvas.getContext('2d').drawImage(vid, 0, 0, 320, 180);
+                            resolve(canvas.toDataURL('image/jpeg', 0.8));
+                        } catch (e) {
+                            resolve("");
+                        }
+                    };
+                    vid.onerror = () => resolve("");
+                });
+
+                status.innerText = "Saving imported link to database...";
+                await Promise.all([
+                    set(ref(database, `video-details/${videoId}`), {
+                        "Video-name": videoNameInput,
+                        "Video-Thumbnail": thumbnail,
+                        "Video-Creator": channelName,
+                        "CreatorKey": userChannelKey,
+                        "isShort": isShort
+                    }),
+                    set(ref(database, `video-data/${videoId}`), {
+                        totalChunks: 1,
+                        "Video-Chunk1": videoUrl
+                    })
+                ]);
+
+                status.innerText = "Import complete!";
+                publishBtn.disabled = false;
+                document.getElementById('videoName').value = "";
+                document.getElementById('videoUrlInput').value = "";
+                alert(isShort ? "Short link successfully imported!" : "Video link successfully imported!");
+                switchView(isShort ? 'shortsView' : 'homeView');
+
+            } catch (err) {
+                console.error(err);
+                alert("Import failed: " + err.message);
+                publishBtn.disabled = false;
+                status.innerText = "Error importing link.";
+            }
+        };
+
+        async function loadHomeFeed() {
+            const grid = document.getElementById('videoGrid');
+            grid.innerHTML = '<div class="loader">Loading videos...</div>';
+            
+            const snap = await get(child(ref(database), 'video-details'));
+            grid.innerHTML = "";
+
+            if (!snap.exists()) {
+                grid.innerHTML = "<p>No videos found.</p>";
+                return;
+            }
+
+            const channelsSnap = await get(child(ref(database), 'channels'));
+            const channelsMap = {};
+            if(channelsSnap.exists()) {
+                channelsSnap.forEach(c => {
+                    channelsMap[c.key] = {
+                        name: c.val().name || c.key,
+                        pfp: c.val().pfp || ""
+                    };
+                });
+            }
+
+            snap.forEach((vidSnap) => {
+                const details = vidSnap.val();
+                const creatorKey = details["CreatorKey"] || "";
+                const creatorName = details["Video-Creator"] || (channelsMap[creatorKey] ? channelsMap[creatorKey].name : "Unknown");
+                const pfpUrl = (channelsMap[creatorKey] && channelsMap[creatorKey].pfp) ? channelsMap[creatorKey].pfp : "";
+                const pfpHtml = renderPfpElement(creatorName, pfpUrl, 50);
+
+                const card = document.createElement('div');
+                card.className = 'video-card';
+                
+                card.innerHTML = `
+                    <img src="${details["Video-Thumbnail"] || ''}" loading="eager" fetchpriority="high">
+                    <div class="video-info">
+                        <div class="card-pfp-wrap">${pfpHtml}</div>
+                        <div>
+                            <div class="video-title">${escapeHtml(details["Video-name"])}</div>
+                            <div class="channel-name" onclick="event.stopPropagation(); openChannelPage('${creatorKey}', '${escapeHtml(creatorName)}')">${escapeHtml(creatorName)}</div>
+                        </div>
+                    </div>
+                `;
+                
+                card.querySelector('img').onclick = () => watchVideo(vidSnap.key);
+                card.querySelector('.video-title').onclick = () => watchVideo(vidSnap.key);
+                
+                grid.appendChild(card);
+            });
         }
 
-        function resetPlayer() {
-            const player = document.getElementById('player');
-            player.removeAttribute('src'); player.load(); 
-            currentlyPlayingCreator = "";
-            currentlyPlayingFilename = "";
-            document.getElementById('videoWrapper').style.display = "none";
-            document.getElementById('search').value = "";
-            document.getElementById('status').textContent = `Successfully synced! (${serverVideos.length} videos found)`;
-            document.getElementById('downloadBtn').style.display = "none";
-            document.getElementById('loopBtn').style.display = "none";
-            document.getElementById('likeBtn').style.display = "none";
-            document.getElementById('resetBtn').style.display = "none";
-            document.getElementById('volumeControl').style.display = "none"; 
-            showRandomVideos(); 
-            renderLikedVideosGrid();
+        async function loadShortsFeed() {
+            const container = document.getElementById('shortsContainer');
+            container.innerHTML = '<div class="loader">Loading shorts...</div>';
+
+            const snap = await get(child(ref(database), 'video-details'));
+            container.innerHTML = "";
+
+            if (!snap.exists()) {
+                container.innerHTML = "<p>No shorts found.</p>";
+                return;
+            }
+
+            const shortKeys = [];
+            snap.forEach((vidSnap) => {
+                const details = vidSnap.val();
+                if (details["isShort"] === true) {
+                    shortKeys.push({ key: vidSnap.key, details });
+                }
+            });
+
+            if (shortKeys.length === 0) {
+                container.innerHTML = "<p>No vertical or square shorts under 2 minutes available yet.</p>";
+                return;
+            }
+
+            for (const item of shortKeys) {
+                const vidSnapKey = item.key;
+                const details = item.details;
+                
+                const shortCard = document.createElement('div');
+                shortCard.className = 'short-card';
+                
+                const videoEl = document.createElement('video');
+                videoEl.controls = true;
+                videoEl.loop = true;
+                videoEl.setAttribute('playsinline', '');
+                
+                const dataSnap = await get(child(ref(database), `video-data/${vidSnapKey}`));
+                if(dataSnap.exists()) {
+                    const dataObj = dataSnap.val();
+                    const totalChunks = dataObj.totalChunks;
+                    
+                    if (totalChunks === 1 && dataObj["Video-Chunk1"].startsWith("http")) {
+                        videoEl.src = dataObj["Video-Chunk1"];
+                    } else {
+                        const parts = [];
+                        for (let i = 1; i <= totalChunks; i++) {
+                            const res = await fetch(dataObj[`Video-Chunk${i}`]);
+                            parts.push(await res.blob());
+                        }
+                        videoEl.src = URL.createObjectURL(new Blob(parts, { type: 'video/mp4' }));
+                    }
+                }
+
+                const overlay = document.createElement('div');
+                overlay.className = 'short-overlay';
+                overlay.innerHTML = `
+                    <div class="channel-name" onclick="openChannelPage('${details["CreatorKey"]}', '${escapeHtml(details["Video-Creator"])}')">${escapeHtml(details["Video-Creator"])}</div>
+                    <div class="video-title">${escapeHtml(details["Video-name"])}</div>
+                `;
+
+                shortCard.appendChild(videoEl);
+                shortCard.appendChild(overlay);
+                container.appendChild(shortCard);
+            }
         }
 
-        function openAboutModal() { document.getElementById('aboutModal').classList.add('open'); }
-        function closeAboutModal(e) { if (e.target.id === 'aboutModal') document.getElementById('aboutModal').classList.remove('open'); }
+        window.openChannelPage = async function(creatorKey, creatorName) {
+            switchView('channelView');
+            document.getElementById('channelPageTitle').innerText = creatorName;
+            
+            const avatarContainer = document.getElementById('channelPageAvatar');
+            avatarContainer.innerHTML = "";
 
-        document.addEventListener('click', (e) => { if (e.target.id !== 'search') document.getElementById('results').style.display = "none"; });
-        fetchVideoList();
+            const chanSnap = await get(child(ref(database), `channels/${creatorKey}`));
+            let pfpUrl = "";
+            let theme = { bgColor: "#f9f9f9", headerColor: "#ffffff", textColor: "#111111", accentColor: "#ff0000" };
+
+            if (chanSnap.exists()) {
+                const chanData = chanSnap.val();
+                pfpUrl = chanData.pfp || "";
+                if(chanData.theme) {
+                    theme = { ...theme, ...chanData.theme };
+                }
+            }
+
+            const chanView = document.getElementById('channelView');
+            const chanHeader = document.getElementById('channelHeaderBox');
+            chanView.style.backgroundColor = theme.bgColor;
+            chanView.style.color = theme.textColor;
+            chanHeader.style.backgroundColor = theme.headerColor;
+            chanHeader.style.color = theme.textColor;
+            document.getElementById('channelPageTitle').style.color = theme.accentColor;
+
+            avatarContainer.innerHTML = renderPfpElement(creatorName, pfpUrl, 90);
+
+            const grid = document.getElementById('channelVideoGrid');
+            grid.innerHTML = '<div class="loader">Loading channel videos...</div>';
+
+            const snap = await get(child(ref(database), 'video-details'));
+            grid.innerHTML = "";
+
+            let foundAny = false;
+            snap.forEach((vidSnap) => {
+                const details = vidSnap.val();
+                if (details["CreatorKey"] === creatorKey) {
+                    foundAny = true;
+                    const card = document.createElement('div');
+                    card.className = 'video-card';
+                    card.onclick = () => watchVideo(vidSnap.key);
+                    card.innerHTML = `
+                        <img src="${details["Video-Thumbnail"] || ''}" loading="eager">
+                        <div class="video-info">
+                            <div>
+                                <div class="video-title">${escapeHtml(details["Video-name"])}</div>
+                                <div class="channel-name">${escapeHtml(creatorName)}</div>
+                            </div>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                }
+            });
+
+            if (!foundAny) {
+                grid.innerHTML = "<p>This channel hasn't uploaded any videos yet.</p>";
+            }
+        }
+
+        window.watchVideo = async function(videoId) {
+            activeVideoId = videoId;
+            switchView('watchView');
+            const loadingOverlay = document.getElementById('videoLoadingOverlay');
+            const loadingFill = document.getElementById('videoLoadingFill');
+            const loadingText = document.getElementById('videoLoadingText');
+
+            loadingOverlay.classList.remove('hidden');
+            loadingFill.style.width = '0%';
+            loadingText.innerText = 'Fetching video source (0%)';
+
+            document.getElementById('watchTitle').innerText = "Loading video...";
+            document.getElementById('watchChannel').innerText = "";
+            document.getElementById('watchPfpContainer').innerHTML = "";
+            document.getElementById('commentsList').innerHTML = "";
+            videoPlayer.src = "";
+
+            const detailsSnap = await get(child(ref(database), `video-details/${videoId}`));
+            const details = detailsSnap.val();
+
+            document.getElementById('watchTitle').innerText = details["Video-name"];
+            const creatorName = details["Video-Creator"];
+            const creatorKey = details["CreatorKey"];
+            document.getElementById('watchChannel').innerText = creatorName;
+            document.getElementById('watchChannel').onclick = () => openChannelPage(creatorKey, creatorName);
+
+            const chanSnap = await get(child(ref(database), `channels/${creatorKey}`));
+            let pfpUrl = chanSnap.exists() ? chanSnap.val().pfp || "" : "";
+            const watchAvatarEl = renderPfpElement(creatorName, pfpUrl, 50);
+            const pfpWrap = document.createElement('div');
+            pfpWrap.innerHTML = watchAvatarEl;
+            pfpWrap.style.cursor = "pointer";
+            pfpWrap.onclick = () => openChannelPage(creatorKey, creatorName);
+            document.getElementById('watchPfpContainer').appendChild(pfpWrap);
+
+            const dataSnap = await get(child(ref(database), `video-data/${videoId}`));
+            const dataObj = dataSnap.val();
+            const totalChunks = dataObj.totalChunks;
+
+            if (totalChunks === 1 && dataObj["Video-Chunk1"].startsWith("http")) {
+                videoPlayer.src = dataObj["Video-Chunk1"];
+                loadingFill.style.width = '100%';
+                loadingText.innerText = 'Loading direct link source (100%)';
+            } else {
+                const parts = [];
+                for (let i = 1; i <= totalChunks; i++) {
+                    const res = await fetch(dataObj[`Video-Chunk${i}`]);
+                    parts.push(await res.blob());
+
+                    const pct = Math.round((i / totalChunks) * 100);
+                    loadingFill.style.width = pct + '%';
+                    loadingText.innerText = `Loading video chunks (${pct}%)`;
+                }
+                videoPlayer.src = URL.createObjectURL(new Blob(parts, { type: 'video/mp4' }));
+            }
+            
+            loadingOverlay.classList.add('hidden');
+            videoPlayer.play();
+
+            loadComments(videoId);
+        }
+
+        window.postComment = async function() {
+            const user = document.getElementById('commentUser').value.trim() || (loggedInUser ? loggedInUser.email.split('@')[0] : "Anonymous");
+            const text = document.getElementById('commentText').value.trim();
+            if(!text || !activeVideoId) return;
+
+            const newComRef = push(ref(database, `comments/${activeVideoId}`));
+            await set(newComRef, { user, text, createdAt: Date.now() });
+            document.getElementById('commentText').value = "";
+        }
+
+        function loadComments(videoId) {
+            const list = document.getElementById('commentsList');
+            onChildAdded(ref(database, `comments/${videoId}`), (snap) => {
+                const c = snap.val();
+                const div = document.createElement('div');
+                div.style.borderBottom = "1px solid #eee";
+                div.style.padding = "6px 0";
+                div.innerHTML = `<strong>${escapeHtml(c.user)}</strong>: ${escapeHtml(c.text)}`;
+                list.prepend(div);
+            });
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
     </script>
 </body>
 </html>
