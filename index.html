@@ -192,7 +192,7 @@
 
             <div class="form-group" id="channelSetupBox" style="display:none;">
                 <h2>Your Channel Customization</h2>
-                <p>Logged in Channel: <strong id="currentUserEmail"></strong></p>
+                <p>Logged in Channel: <strong id="currentUserChannelName"></strong></p>
                 
                 <label>Channel Name:</label>
                 <input type="text" id="desiredChannelName" placeholder="Enter your channel name">
@@ -452,7 +452,7 @@
                             <div id="search_follow_${cKey}"></div>
                         `;
                         chanContainer.appendChild(row);
-                        renderFollowButton(cKey, `search_follow_${cKey}`);
+                        renderFollowButton(cKey, cName, `search_follow_${cKey}`);
                     }
                 });
             }
@@ -504,7 +504,7 @@
             }
         }
 
-        async function renderFollowButton(targetChannelKey, containerElementId) {
+        async function renderFollowButton(targetChannelKey, targetChannelName, containerElementId) {
             const container = document.getElementById(containerElementId);
             if(!container) return;
 
@@ -518,18 +518,20 @@
 
             const btn = document.createElement('button');
             btn.className = `follow-btn ${isFollowing ? 'following' : ''}`;
-            btn.innerText = isFollowing ? 'Following ✓' : `Follow @${targetChannelKey}`;
+            btn.innerText = isFollowing ? 'Following ✓' : `Follow @${targetChannelName}`;
             btn.onclick = async (e) => {
                 e.stopPropagation();
                 if(isFollowing) {
                     await set(ref(database, `subscribers/${targetChannelKey}/${userChannelKey}`), null);
                 } else {
+                    const chanSnap = await get(child(ref(database), `channels/${userChannelKey}`));
+                    const followerName = (chanSnap.exists() && chanSnap.val().name) ? chanSnap.val().name : "Creator";
                     await set(ref(database, `subscribers/${targetChannelKey}/${userChannelKey}`), {
-                        email: loggedInUser.email,
+                        channelName: followerName,
                         followedAt: Date.now()
                     });
                 }
-                renderFollowButton(targetChannelKey, containerElementId);
+                renderFollowButton(targetChannelKey, targetChannelName, containerElementId);
             };
             container.innerHTML = "";
             container.appendChild(btn);
@@ -672,7 +674,7 @@
                 channelsSnap.forEach((chanSnap) => {
                     if(chanSnap.val().ownerUid === user.uid) {
                         userChannelKey = chanSnap.key;
-                        channelNameVal = chanSnap.val().name || user.email.split('@')[0];
+                        channelNameVal = chanSnap.val().name || "Channel";
                         document.getElementById('desiredChannelName').value = chanSnap.val().name || "";
                         
                         const theme = chanSnap.val().theme || {};
@@ -689,13 +691,12 @@
                 authStatusEl.innerHTML = `<span style="cursor: pointer; color: #0066cc; text-decoration: underline; font-weight: bold;" onclick="openChannelPage('${userChannelKey}', '${escapeHtml(channelNameVal)}')">${escapeHtml(channelNameVal)}</span>`;
                 updateNotificationsBadge();
             } else {
-                const defaultName = user.email.split('@')[0];
-                authStatusEl.innerHTML = `<span>${escapeHtml(defaultName)} (⚠️ Channel Uninitialized)</span>`;
+                authStatusEl.innerHTML = `<span>(⚠️ Channel Uninitialized)</span>`;
             }
 
             const handleText = userChannelKey ? channelNameVal : "⚠️ Setup Channel in Account Tab First";
             document.getElementById('uploaderDisplayHandle').innerText = handleText;
-            document.getElementById('currentUserEmail').innerText = handleText;
+            document.getElementById('currentUserChannelName').innerText = handleText;
         }
 
         onAuthStateChanged(auth, async (user) => {
@@ -725,7 +726,6 @@
             const pass = document.getElementById('authPassword').value;
             if(!email) { alert("Please provide an email."); return; }
 
-            // Strict Unique Check: Ensure email isn't already used as a channel key base
             const channelKey = email.replace(/[^a-zA-Z0-9_]/g, "");
             const existingChannelSnap = await get(child(ref(database), `channels/${channelKey}`));
             if (existingChannelSnap.exists()) {
@@ -738,7 +738,6 @@
                 const defaultChannelName = email.split('@')[0];
                 await set(ref(database, `channels/${channelKey}`), {
                     ownerUid: cred.user.uid,
-                    email: email,
                     name: defaultChannelName,
                     pfp: "",
                     theme: { bgColor: "#f9f9f9", headerColor: "#ffffff", textColor: "#111111", accentColor: "#ff0000" },
@@ -793,7 +792,6 @@
 
             await set(ref(database, `channels/${channelKey}`), {
                 ownerUid: loggedInUser.uid,
-                email: loggedInUser.email,
                 name: channelName,
                 pfp: pfpData,
                 theme: theme,
@@ -887,7 +885,7 @@
 
             userChannelKey = loggedInUser.email.replace(/[^a-zA-Z0-9_]/g, "");
             const channelsSnap = await get(child(ref(database), `channels/${userChannelKey}`));
-            const channelName = channelsSnap.exists() && channelsSnap.val().name ? channelsSnap.val().name : loggedInUser.email.split('@')[0];
+            const channelName = channelsSnap.exists() && channelsSnap.val().name ? channelsSnap.val().name : "Creator";
 
             const file = document.getElementById('videoFile').files[0];
             const videoNameInput = document.getElementById('videoName').value.trim();
@@ -1021,7 +1019,7 @@
 
             userChannelKey = loggedInUser.email.replace(/[^a-zA-Z0-9_]/g, "");
             const channelsSnap = await get(child(ref(database), `channels/${userChannelKey}`));
-            const channelName = channelsSnap.exists() && channelsSnap.val().name ? channelsSnap.val().name : loggedInUser.email.split('@')[0];
+            const channelName = channelsSnap.exists() && channelsSnap.val().name ? channelsSnap.val().name : "Creator";
 
             const videoUrl = document.getElementById('videoUrlInput').value.trim();
             const videoNameInput = document.getElementById('videoName').value.trim();
@@ -1297,7 +1295,7 @@
             document.getElementById('channelPageTitle').style.color = theme.accentColor;
 
             avatarContainer.innerHTML = renderPfpElement(creatorName, pfpUrl, 90);
-            renderFollowButton(creatorKey, 'channelFollowActionContainer');
+            renderFollowButton(creatorKey, creatorName, 'channelFollowActionContainer');
 
             const grid = document.getElementById('channelVideoGrid');
             grid.innerHTML = '<div class="loader">Loading channel videos...</div>';
@@ -1392,7 +1390,7 @@
             pfpWrap.onclick = () => openChannelPage(creatorKey, creatorName);
             document.getElementById('watchPfpContainer').appendChild(pfpWrap);
 
-            renderFollowButton(creatorKey, 'watchFollowContainer');
+            renderFollowButton(creatorKey, creatorName, 'watchFollowContainer');
 
             const dataSnap = await get(child(ref(database), `video-data/${videoId}`));
             if (!dataSnap.exists()) {
@@ -1432,8 +1430,6 @@
                 const chanSnap = await get(child(ref(database), `channels/${userChannelKey}`));
                 if(chanSnap.exists() && chanSnap.val().name) {
                     authorName = chanSnap.val().name;
-                } else {
-                    authorName = loggedInUser.email.split('@')[0];
                 }
             } else {
                 authorName = document.getElementById('commentUser').value.trim() || "Anonymous";
