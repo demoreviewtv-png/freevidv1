@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Freevid!</title>
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1833213869230275"
+         crossorigin="anonymous"></script>
     <style>
         body { font-family: Arial, sans-serif; margin: 0; background: #f9f9f9; color: #111; transition: background 0.3s, color 0.3s; }
         header { background: #fff; padding: 15px 30px; display: flex; justify-content: space-between; border-bottom: 1px solid #ddd; align-items: center; flex-wrap: wrap; gap: 10px; }
@@ -211,7 +213,10 @@
                 <div style="background: #fff3cd; border: 1px solid #ffeeba; padding: 12px; border-radius: 6px; margin: 15px 0;">
                     <strong>Need more upload credits?</strong>
                     <p style="font-size: 13px; margin: 5px 0 10px 0;">Watch ads to earn credits! Every 1 minute watched earns you 3 credits.</p>
-                    <button onclick="openAdWatchModal()" style="background: #ffc107; color: #000;">📺 Watch Ad to Earn Credits</button>
+                    <button onclick="openAdWatchModal()" style="background: #ffc107; color: #000;">
+                        📺 Watch Ad to Earn Credits
+                        <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1833213869230275" crossorigin="anonymous"></script>
+                    </button>
                 </div>
                 
                 <label>Channel Name:</label>
@@ -449,38 +454,34 @@
             modal.style.cssText = "position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.8); display:flex; justify-content:center; align-items:center; z-index:2000;";
             modal.innerHTML = `
                 <div style="background:#fff; padding:30px; border-radius:10px; width:400px; text-align:center; box-shadow:0 4px 15px rgba(0,0,0,0.3);">
-                    <h3 style="color:#ff0000; margin-top:0;">📺 Sponsored Ad Simulation</h3>
-                    <p style="font-size:14px; color:#555;">Watch this ad to earn credits! (1 minute = 3 credits)</p>
-                    <div style="background:#000; color:#fff; height:150px; display:flex; align-items:center; justify-content:center; font-weight:bold; border-radius:6px; margin:15px 0; font-size:18px;" id="adTimerDisplay">
-                        Ad Playing: 60s remaining
+                    <h3 style="color:#ff0000; margin-top:0;">📺 Advertisement</h3>
+                    <p style="font-size:14px; color:#555;">Advertisement</p>
+                    <div id="realAdContainer" style="min-height:150px; display:flex; align-items:center; justify-content:center; margin:15px 0;">
+                        <ins class="adsbygoogle"
+                             style="display:block; width:100%; min-height:150px;"
+                             data-ad-client="ca-pub-1833213869230275"
+                             data-ad-format="auto"
+                             data-full-width-responsive="true"></ins>
                     </div>
-                    <button id="claimCreditsBtn" disabled style="background:#ccc; cursor:not-allowed; width:100%;">Claim 3 Credits</button>
-                    <button onclick="document.getElementById('adModalBox').remove();" style="background:#666; margin-top:5px; width:100%;">Cancel</button>
+                    <button onclick="document.getElementById('adModalBox').remove();" style="background:#666; margin-top:5px; width:100%;">Close</button>
                 </div>
             `;
             document.body.appendChild(modal);
 
-            let timeLeft = 60; // 1 minute simulation (change to lower duration for quick testing if needed)
-            const timerEl = document.getElementById('adTimerDisplay');
-            const claimBtn = document.getElementById('claimCreditsBtn');
+            const adsenseScript = document.createElement('script');
+            adsenseScript.async = true;
+            adsenseScript.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1833213869230275';
+            adsenseScript.crossOrigin = 'anonymous';
+            modal.querySelector('#realAdContainer').appendChild(adsenseScript);
 
-            const interval = setInterval(async () => {
-                timeLeft--;
-                if(timeLeft > 0) {
-                    timerEl.innerText = `Ad Playing: ${timeLeft}s remaining`;
-                } else {
-                    clearInterval(interval);
-                    timerEl.innerText = "Ad Finished!";
-                    claimBtn.disabled = false;
-                    claimBtn.style.backgroundColor = "#ff0000";
-                    claimBtn.style.cursor = "pointer";
-                    claimBtn.onclick = async () => {
-                        await addCreditsToUser(3);
-                        modal.remove();
-                        alert("Successfully earned 3 credits!");
-                    };
-                }
-            }, 1000);
+            const adUnit = modal.querySelector('.adsbygoogle');
+            try {
+                (window.adsbygoogle = window.adsbygoogle || []).push({});
+            } catch (e) {
+                console.warn('AdSense was not available yet:', e);
+            }
+
+            // AdSense is displayed here. No simulated timer or incentivized ad-watching reward is used.
         }
 
         async function addCreditsToUser(amount) {
