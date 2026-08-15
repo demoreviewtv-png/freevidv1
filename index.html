@@ -4,8 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Freevid!</title>
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1833213869230275"
-         crossorigin="anonymous"></script>
+    <style>
+        .adsense-slot { margin: 20px auto; text-align: center; min-height: 100px; width: 100%; overflow: hidden; }
+    </style>
     <style>
         body { font-family: Arial, sans-serif; margin: 0; background: #f9f9f9; color: #111; transition: background 0.3s, color 0.3s; }
         header { background: #fff; padding: 15px 30px; display: flex; justify-content: space-between; border-bottom: 1px solid #ddd; align-items: center; flex-wrap: wrap; gap: 10px; }
@@ -146,146 +147,7 @@
     </header>
 
     <div class="container">
-
-        <div id="homeView" class="view active">
-            <div class="vibe-banner">
-                <span>🎵 Set the Vibe (Chill Background Beats)</span>
-                <div>
-                    <button class="vibe-btn" onclick="toggleVibeMusic()" id="vibeToggleBtn">Play Vibe</button>
-                </div>
-            </div>
-            <audio id="vibeAudio" loop src="https://stream.zeno.fm/f3wvbbqmdg8uv"></audio>
-
-            <h2>Recommended Videos</h2>
-            <div id="videoGrid" class="video-grid"></div>
-        </div>
-
-        <div id="searchView" class="view">
-            <button onclick="switchView('homeView')">← Back to Feed</button>
-            <h2 id="searchQueryTitle" style="margin-top: 15px;">Search Results</h2>
-            
-            <div class="search-results-section">
-                <h3>Channels</h3>
-                <div id="searchChannelResults"></div>
-            </div>
-
-            <div class="search-results-section">
-                <h3>Videos</h3>
-                <div id="searchVideoGrid" class="video-grid"></div>
-            </div>
-        </div>
-
-        <div id="shortsView" class="view">
-            <h2>Shorts</h2>
-            <div id="shortsContainer" class="shorts-container"></div>
-            <div style="display: flex; justify-content: center; gap: 15px; margin-top: 15px;">
-                <button id="shortPrevBtn" onclick="navigateShort(-1)" disabled>Previous Short</button>
-                <button id="shortNextBtn" onclick="navigateShort(1)">Next Short</button>
-            </div>
-        </div>
-
-        <div id="channelView" class="view" style="padding: 20px; border-radius: 8px;">
-            <button onclick="switchView('homeView')">← Back to Feed</button>
-            <div class="channel-header" id="channelHeaderBox" style="margin-top: 15px;">
-                <div id="channelPageAvatar"></div>
-                <h2 id="channelPageTitle" style="margin: 5px 0 0 0;"></h2>
-                <div id="channelFollowActionContainer"></div>
-            </div>
-            <h3 id="channelVideoSectionTitle">Uploaded Videos</h3>
-            <div id="channelVideoGrid" class="video-grid"></div>
-        </div>
-
-        <div id="authView" class="view">
-            <div class="form-group" id="loginBox">
-                <h2>Account Login / Sign Up</h2>
-                <p style="font-size: 13px; color: #666;">Note: Each email can only create one channel profile.</p>
-                <input type="email" id="authEmail" placeholder="Email">
-                <input type="password" id="authPassword" placeholder="Password">
-                <button onclick="handleSignUp()">Register New Account</button>
-                <button onclick="handleLogin()" style="background: #0066cc;">Log In</button>
-            </div>
-
-            <div class="form-group" id="channelSetupBox" style="display:none;">
-                <h2>Your Channel Customization & Credits</h2>
-                <p>Logged in Channel: <strong id="currentUserChannelName"></strong></p>
-                <p>Upload Credits Balance: <span id="userCreditsDisplay" class="credit-badge">🪙 0 Credits</span></p>
-                
-                <div style="background: #fff3cd; border: 1px solid #ffeeba; padding: 12px; border-radius: 6px; margin: 15px 0;">
-                    <strong>Need more upload credits?</strong>
-                    <p style="font-size: 13px; margin: 5px 0 10px 0;">Watch ads to earn credits! Every 1 minute watched earns you 3 credits.</p>
-                    <button onclick="openAdWatchModal()" style="background: #ffc107; color: #000;">
-                        📺 Watch Ad to Earn Credits
-                        <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1833213869230275" crossorigin="anonymous"></script>
-                    </button>
-                </div>
-                
-                <label>Channel Name:</label>
-                <input type="text" id="desiredChannelName" placeholder="Enter your channel name">
-
-                <label>Change Profile Picture:</label>
-                <input type="file" id="pfpFile" accept="image/*"><br>
-
-                <h3 style="margin-top: 20px;">Page Theme Customizer</h3>
-                <div class="color-picker-row">
-                    <label>Page Background Color:</label>
-                    <input type="color" id="themeBgColor" value="#f9f9f9">
-                </div>
-                <div class="color-picker-row">
-                    <label>Header / Banner Box Color:</label>
-                    <input type="color" id="themeHeaderColor" value="#ffffff">
-                </div>
-                <div class="color-picker-row">
-                    <label>Main Text Color:</label>
-                    <input type="color" id="themeTextColor" value="#111111">
-                </div>
-                <div class="color-picker-row">
-                    <label>Accent / Title Color:</label>
-                    <input type="color" id="themeAccentColor" value="#ff0000">
-                </div>
-
-                <button onclick="saveChannelProfile()" style="margin-top: 15px;">Save Channel & Theme</button>
-            </div>
-            <p id="authStatusText" style="font-weight: bold;"></p>
-        </div>
-
-        <div id="uploadView" class="view">
-            <div class="form-group">
-                <h2>Publish a Video</h2>
-                <p>Posting as Channel: <strong id="uploaderDisplayHandle">Checking channel...</strong> | Balance: <span id="uploadViewCreditsDisplay" class="credit-badge">🪙 0 Credits</span></p>
-                
-                <div style="background: #e8f4fd; border: 1px solid #b8daff; padding: 10px; border-radius: 6px; margin-bottom: 15px; font-size: 13px;">
-                    <strong>Upload Pricing Rules:</strong> 5 mins = 10 credits | 1 min = 2 credits | 30 secs = 1 credit | Below 30 secs = 1 credit.
-                </div>
-
-                <div class="upload-tabs">
-                    <button class="upload-tab-btn active-tab" id="fileTabBtn" onclick="switchUploadMode('file')">Upload File</button>
-                    <button class="upload-tab-btn" id="linkTabBtn" onclick="switchUploadMode('link')">Import via .mp4 Link</button>
-                </div>
-
-                <input type="text" id="videoName" placeholder="Video Title">
-
-                <div id="fileUploadSection">
-                    <label>Select Video File:</label>
-                    <input type="file" id="videoFile" accept="video/*"><br>
-                    <button onclick="uploadVideoFile()" id="publishFileBtn">Publish Video File</button>
-                </div>
-
-                <div id="linkUploadSection" style="display:none;">
-                    <label>Direct .mp4 Video URL Link:</label>
-                    <input type="url" id="videoUrlInput" placeholder="https://example.com/video.mp4"><br>
-                    <button onclick="importVideoLink()" id="publishLinkBtn" style="background: #0066cc;">Import & Publish Link</button>
-                </div>
-
-                <p id="status" style="font-weight: bold; margin-top: 10px;"></p>
-                
-                <div id="progressBarContainer" class="progress-bar-container">
-                    <div id="progressBarFill" class="progress-bar-fill"></div>
-                    <div id="progressBarText" class="progress-bar-text">0%</div>
-                </div>
-            </div>
-        </div>
-
-        <div id="watchView" class="view">
+    <div id="watchView" class="view">
             <button onclick="switchView('homeView')">← Back to Feed</button>
             <h2 id="watchTitle"></h2>
             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; flex-wrap: wrap; gap: 10px;">
@@ -308,7 +170,8 @@
             
             <div class="video-player-wrapper" id="playerWrapper">
                 <div id="videoLoadingOverlay" class="video-loading-overlay">
-                    <div id="videoLoadingText" class="load-bar-text">Loading video chunks (0/0)</div>
+                    <div id="videoLoadingText" class="load-bar-text">Preparing video...</div>
+                    <div id="videoLoadingDetails" style="font-size:13px;color:#666;margin:6px 0 10px;text-align:center;">Checking chunk count...</div>
                     <div class="load-bar-track">
                         <div id="videoLoadingFill" class="load-bar-fill"></div>
                     </div>
@@ -442,280 +305,80 @@
             }
         }
 
-        // --- Ad Watching & Credits Logic ---
-        window.openAdWatchModal = async function() {
-            if(!userChannelKey) {
-                alert("Please log in first.");
-                return;
-            }
-
-            const modal = document.createElement('div');
-            modal.id = 'adModalBox';
-            modal.style.cssText = "position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.8); display:flex; justify-content:center; align-items:center; z-index:2000;";
-            modal.innerHTML = `
-                <div style="background:#fff; padding:30px; border-radius:10px; width:400px; text-align:center; box-shadow:0 4px 15px rgba(0,0,0,0.3);">
-                    <h3 style="color:#ff0000; margin-top:0;">📺 Advertisement</h3>
-                    <p style="font-size:14px; color:#555;">Advertisement</p>
-                    <div id="realAdContainer" style="min-height:150px; display:flex; align-items:center; justify-content:center; margin:15px 0;">
-                        <ins class="adsbygoogle"
-                             style="display:block; width:100%; min-height:150px;"
-                             data-ad-client="ca-pub-1833213869230275"
-                             data-ad-format="auto"
-                             data-full-width-responsive="true"></ins>
-                    </div>
-                    <button onclick="document.getElementById('adModalBox').remove();" style="background:#666; margin-top:5px; width:100%;">Close</button>
-                </div>
-            `;
-            document.body.appendChild(modal);
-
-            const adsenseScript = document.createElement('script');
-            adsenseScript.async = true;
-            adsenseScript.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1833213869230275';
-            adsenseScript.crossOrigin = 'anonymous';
-            modal.querySelector('#realAdContainer').appendChild(adsenseScript);
-
-            const adUnit = modal.querySelector('.adsbygoogle');
-            try {
-                (window.adsbygoogle = window.adsbygoogle || []).push({});
-            } catch (e) {
-                console.warn('AdSense was not available yet:', e);
-            }
-
-            // AdSense is displayed here. No simulated timer or incentivized ad-watching reward is used.
-        }
-
-        async function addCreditsToUser(amount) {
-            if(!userChannelKey) return;
-            const creditsRef = ref(database, `channels/${userChannelKey}/credits`);
-            const snap = await get(creditsRef);
-            let currentCredits = snap.exists() ? snap.val() : 0;
-            currentCredits += amount;
-            await set(creditsRef, currentCredits);
-            updateCreditsUI(currentCredits);
-        }
-
         async function getUserCredits() {
             if(!userChannelKey) return 0;
             const snap = await get(child(ref(database), `channels/${userChannelKey}/credits`));
-            return snap.exists() ? snap.val() : 0;
+            return snap.exists() ? Number(snap.val()) || 0 : 0;
         }
 
-        async function updateCreditsUI(balance) {
-            document.getElementById('userCreditsDisplay').innerText = `🪙 ${balance} Credits`;
-            document.getElementById('uploadViewCreditsDisplay').innerText = `🪙 ${balance} Credits`;
+        function updateCreditsUI(credits) {
+            const value = Number(credits) || 0;
+            const text = `🪙 ${value} Credits`;
+            const ids = ['userCreditsDisplay','uploadViewCreditsDisplay'];
+            ids.forEach(id => { const el=document.getElementById(id); if(el) el.innerText=text; });
         }
 
-        function calculateRequiredCredits(durationInSeconds) {
-            if (durationInSeconds <= 30) return 1;
-            const minutes = durationInSeconds / 60;
-            if (minutes <= 1) return 2;
-            return Math.max(1, Math.ceil(minutes * 2));
+        async function addCreditsToUser(amount) {
+            if(!userChannelKey || amount <= 0) return;
+            const current = await getUserCredits();
+            const updated = current + Math.floor(amount);
+            await set(ref(database, `channels/${userChannelKey}/credits`), updated);
+            updateCreditsUI(updated);
+            return updated;
         }
 
-        window.handleSearchKey = function(e) {
-            if (e.key === 'Enter') {
-                triggerSearch();
-            }
+        function calculateRequiredCredits(duration) {
+            return Math.max(1, Math.ceil((Number(duration) || 0) / 30));
         }
 
-        window.triggerSearch = async function() {
-            const query = document.getElementById('searchInput').value.trim().toLowerCase();
-            if(!query) return;
-            
-            switchView('searchView');
-            document.getElementById('searchQueryTitle').innerText = `Search Results for "${escapeHtml(query)}"`;
-            
-            const chanContainer = document.getElementById('searchChannelResults');
-            const vidGrid = document.getElementById('searchVideoGrid');
-            chanContainer.innerHTML = '<div class="loader">Searching channels...</div>';
-            vidGrid.innerHTML = '<div class="loader">Searching videos...</div>';
-
-            const [channelsSnap, videosSnap] = await Promise.all([
-                get(child(ref(database), 'channels')),
-                get(child(ref(database), 'video-details'))
-            ]);
-
-            chanContainer.innerHTML = "";
-            vidGrid.innerHTML = "";
-
-            let foundChannels = 0;
-            if(channelsSnap.exists()) {
-                channelsSnap.forEach(cSnap => {
-                    const cKey = cSnap.key;
-                    const cVal = cSnap.val();
-                    const cName = cVal.name || "";
-                    if(cName.toLowerCase().includes(query)) {
-                        foundChannels++;
-                        const pfpHtml = renderPfpElement(cName, cVal.pfp || "", 50);
-                        const row = document.createElement('div');
-                        row.className = 'channel-row-card';
-                        row.innerHTML = `
-                            <div class="channel-row-left" onclick="openChannelPage('${cKey}', '${escapeHtml(cName)}')">
-                                ${pfpHtml}
-                                <div>
-                                    <div style="font-weight: bold; font-size: 16px;">${escapeHtml(cName)}</div>
-                                    <div style="color: #666; font-size: 12px;">Freevid Creator Channel</div>
-                                </div>
-                            </div>
-                            <div id="search_follow_${cKey}"></div>
-                        `;
-                        chanContainer.appendChild(row);
-                        renderFollowButton(cKey, cName, `search_follow_${cKey}`);
-                    }
-                });
-            }
-            if(foundChannels === 0) {
-                chanContainer.innerHTML = "<p>No matching channels found.</p>";
-            }
-
-            let foundVideos = 0;
-            if(videosSnap.exists()) {
-                videosSnap.forEach(vSnap => {
-                    const vKey = vSnap.key;
-                    const details = vSnap.val();
-                    const vName = details["Video-name"] || "";
-                    const vCreator = details["Video-Creator"] || "";
-                    const creatorKey = details["CreatorKey"] || "";
-                    
-                    if(vName.toLowerCase().includes(query) || vCreator.toLowerCase().includes(query)) {
-                        foundVideos++;
-                        const card = document.createElement('div');
-                        card.className = 'video-card';
-                        card.onclick = () => watchVideo(vKey);
-
-                        let ownerActionsHtml = "";
-                        if(loggedInUser && userChannelKey === creatorKey) {
-                            ownerActionsHtml = `
-                                <div class="owner-actions-overlay">
-                                    <button class="owner-action-badge" onclick="event.stopPropagation(); renameVideo('${vKey}', '${escapeHtml(vName)}')">Rename</button>
-                                    <button class="owner-action-badge" onclick="event.stopPropagation(); deleteVideo('${vKey}')">Delete</button>
-                                </div>
-                            `;
-                        }
-
-                        card.innerHTML = `
-                            ${ownerActionsHtml}
-                            <img src="${details["Video-Thumbnail"] || ''}" loading="eager">
-                            <div class="video-info">
-                                <div>
-                                    <div class="video-title">${escapeHtml(vName)}</div>
-                                    <div class="channel-name">${escapeHtml(vCreator)}</div>
-                                </div>
-                            </div>
-                        `;
-                        vidGrid.appendChild(card);
-                    }
-                });
-            }
-            if(foundVideos === 0) {
-                vidGrid.innerHTML = "<p>No matching videos found.</p>";
-            }
-        }
-
-        async function renderFollowButton(targetChannelKey, targetChannelName, containerElementId) {
-            const container = document.getElementById(containerElementId);
-            if(!container) return;
-
-            if(!loggedInUser || !userChannelKey || userChannelKey === targetChannelKey) {
-                container.innerHTML = "";
-                return;
-            }
-
-            const subSnap = await get(child(ref(database), `subscribers/${targetChannelKey}/${userChannelKey}`));
-            const isFollowing = subSnap.exists();
-
-            const btn = document.createElement('button');
-            btn.className = `follow-btn ${isFollowing ? 'following' : ''}`;
-            btn.innerText = isFollowing ? 'Following ✓' : `Subscribe @${targetChannelName}`;
-            btn.onclick = async (e) => {
-                e.stopPropagation();
-                if(isFollowing) {
-                    await set(ref(database, `subscribers/${targetChannelKey}/${userChannelKey}`), null);
-                } else {
-                    const chanSnap = await get(child(ref(database), `channels/${userChannelKey}`));
-                    const followerName = (chanSnap.exists() && chanSnap.val().name) ? chanSnap.val().name : "Creator";
-                    await set(ref(database, `subscribers/${targetChannelKey}/${userChannelKey}`), {
-                        channelName: followerName,
-                        followedAt: Date.now()
-                    });
-                }
-                renderFollowButton(targetChannelKey, targetChannelName, containerElementId);
-            };
-            container.innerHTML = "";
-            container.appendChild(btn);
-        }
-
-        window.shareCurrentVideo = function() {
-            if(!activeVideoId) return;
-            const currentUrl = window.location.href.split('#')[0] + "#watch=" + activeVideoId;
-            if (navigator.clipboard) {
-                navigator.clipboard.writeText(currentUrl).then(() => {
-                    alert("Video link copied to clipboard!");
-                }).catch(() => {
-                    prompt("Copy video link:", currentUrl);
-                });
-            } else {
-                prompt("Copy video link:", currentUrl);
-            }
-        }
-
-        async function updateNotificationsBadge() {
+        // --- Coin Rush Credit Game ---
+        window.openCreditGame = function() {
             if(!userChannelKey) {
-                document.getElementById('notifCount').style.display = 'none';
+                alert("Please log in and set up your channel first.");
                 return;
             }
-            const notifSnap = await get(child(ref(database), `notifications/${userChannelKey}`));
-            if(notifSnap.exists()) {
-                let unreadCount = 0;
-                notifSnap.forEach(n => {
-                    if(!n.val().read) unreadCount++;
-                });
-                const badge = document.getElementById('notifCount');
-                if(unreadCount > 0) {
-                    badge.innerText = unreadCount;
-                    badge.style.display = 'block';
-                } else {
-                    badge.style.display = 'none';
-                }
-            } else {
-                document.getElementById('notifCount').style.display = 'none';
-            }
-        }
-
-        window.toggleNotificationsModal = async function() {
-            if(!loggedInUser || !userChannelKey) {
-                alert("Please log in and create a channel to view notifications.");
-                return;
-            }
-            const notifSnap = await get(child(ref(database), `notifications/${userChannelKey}`));
-            let htmlContent = "<h3>Notifications</h3>";
-            
-            if(!notifSnap.exists()) {
-                htmlContent += "<p>No new upload notifications.</p>";
-            } else {
-                let listHtml = "<div style='display:flex; flex-direction:column; gap:10px; max-height:300px; overflow-y:auto;'>";
-                notifSnap.forEach(n => {
-                    const data = n.val();
-                    listHtml += `
-                        <div style="background:#f1f1f1; padding:10px; border-radius:6px; cursor:pointer;" onclick="watchVideo('${data.videoId}')">
-                            <strong>${escapeHtml(data.channelName)}</strong> uploaded a new video: <em>${escapeHtml(data.videoTitle)}</em>
-                        </div>
-                    `;
-                    set(ref(database, `notifications/${userChannelKey}/${n.key}/read`), true);
-                });
-                listHtml += "</div>";
-                htmlContent += listHtml;
-            }
-
-            const existingModal = document.getElementById('notifModalBox');
-            if(existingModal) existingModal.remove();
-
+            const existing = document.getElementById('creditGameModal');
+            if(existing) existing.remove();
             const modal = document.createElement('div');
-            modal.id = 'notifModalBox';
-            modal.style.cssText = "position:fixed; top:70px; right:30px; background:#fff; border:1px solid #ccc; padding:20px; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.15); z-index:1000; width:320px;";
-            modal.innerHTML = htmlContent + `<button style="margin-top:15px; width:100%;" onclick="document.getElementById('notifModalBox').remove(); updateNotificationsBadge();">Close</button>`;
+            modal.id = 'creditGameModal';
+            modal.style.cssText = "position:fixed;inset:0;background:rgba(8,12,20,.88);display:flex;align-items:center;justify-content:center;z-index:3000;padding:18px;";
+            modal.innerHTML = `
+                <div style="background:#fff;border-radius:16px;width:min(560px,96vw);padding:24px;text-align:center;box-shadow:0 12px 40px rgba(0,0,0,.35);">
+                    <h2 style="margin:0 0 6px;color:#0066cc;">Coin Rush</h2>
+                    <p id="gameInstructions" style="margin:0 0 12px;color:#555;">Click the target as many times as possible in 20 seconds. Bigger streaks earn bonus credits.</p>
+                    <div style="display:flex;justify-content:space-around;background:#f4f7fb;border-radius:10px;padding:12px;margin-bottom:12px;font-weight:bold;">
+                        <span>Time: <b id="gameTime">20</b>s</span><span>Hits: <b id="gameHits">0</b></span><span>Streak: <b id="gameStreak">0</b></span><span>Score: <b id="gameScore">0</b></span>
+                    </div>
+                    <div id="gameArena" style="height:280px;background:linear-gradient(135deg,#eaf4ff,#f7fbff);border:2px solid #b8daff;border-radius:12px;position:relative;overflow:hidden;">
+                        <button id="gameTarget" style="position:absolute;width:70px;height:70px;border-radius:50%;border:0;background:#ffcc00;color:#111;font-size:28px;font-weight:bold;cursor:pointer;box-shadow:0 5px 12px rgba(0,0,0,.2);">+</button>
+                    </div>
+                    <div id="gameResult" style="min-height:28px;margin:12px 0;font-weight:bold;"></div>
+                    <button id="gameStartBtn" style="background:#0066cc;color:#fff;width:100%;">Start Game</button>
+                    <button onclick="document.getElementById('creditGameModal').remove();" style="background:#666;color:#fff;width:100%;margin-top:6px;">Close</button>
+                </div>`;
             document.body.appendChild(modal);
-        }
+            const target=modal.querySelector('#gameTarget'), arena=modal.querySelector('#gameArena'), startBtn=modal.querySelector('#gameStartBtn');
+            let running=false, time=20, hits=0, streak=0, score=0, timer=null;
+            function moveTarget(){
+                const maxX=Math.max(0,arena.clientWidth-78), maxY=Math.max(0,arena.clientHeight-78);
+                target.style.left=Math.floor(Math.random()*maxX)+'px'; target.style.top=Math.floor(Math.random()*maxY)+'px';
+            }
+            function finish(){
+                running=false; clearInterval(timer); target.disabled=true; startBtn.disabled=false;
+                const earned=Math.max(1,Math.min(15,Math.floor(score/8)));
+                modal.querySelector('#gameResult').innerText=`Game over! You earned ${earned} credit${earned===1?'':'s'} (${score} points).`;
+                startBtn.innerText='Play Again';
+                startBtn.onclick=()=>startGame();
+                addCreditsToUser(earned).then(()=>updateCreditsUI()).catch(()=>{});
+            }
+            function startGame(){
+                clearInterval(timer); running=true; time=20; hits=0; streak=0; score=0; target.disabled=false; startBtn.disabled=true; startBtn.innerText='Playing...'; modal.querySelector('#gameResult').innerText='';
+                modal.querySelector('#gameTime').innerText=time; modal.querySelector('#gameHits').innerText=hits; modal.querySelector('#gameStreak').innerText=streak; modal.querySelector('#gameScore').innerText=score; moveTarget();
+                timer=setInterval(()=>{time--;modal.querySelector('#gameTime').innerText=time;if(time<=0)finish();},1000);
+            }
+            target.onclick=()=>{if(!running)return;hits++;streak++;score+=10+Math.min(streak,10);modal.querySelector('#gameHits').innerText=hits;modal.querySelector('#gameStreak').innerText=streak;modal.querySelector('#gameScore').innerText=score;moveTarget();};
+            startBtn.onclick=startGame; moveTarget();
+        };
 
         window.switchUploadMode = function(mode) {
             const fileBtn = document.getElementById('fileTabBtn');
@@ -1048,6 +711,14 @@
                 alert("Provide both a video file and a title.");
                 return;
             }
+
+            const MAX_FILE_SIZE = 100 * 1024 * 1024;
+            if (file.size > MAX_FILE_SIZE) {
+                alert(`This file is too large. The maximum upload size is 100 MB. Your file is ${(file.size / 1024 / 1024).toFixed(1)} MB.`);
+                return;
+            }
+            const totalChunksPreview = Math.ceil(file.size / CHUNK_SIZE);
+            status.innerText = `Ready: ${(file.size / 1024 / 1024).toFixed(1)} MB • ${totalChunksPreview} chunks (5 MB each)`;
 
             const videoCheckObj = document.createElement('video');
             videoCheckObj.src = URL.createObjectURL(file);
@@ -1597,7 +1268,8 @@
 
             loadingOverlay.classList.remove('hidden');
             loadingFill.style.width = '0%';
-            loadingText.innerText = 'Fetching video source (0/0)';
+            loadingText.innerText = 'Checking video chunks...';
+            document.getElementById('videoLoadingDetails').innerText = 'Reading video metadata and chunk count';
 
             document.getElementById('watchTitle').innerText = "Loading video...";
             document.getElementById('watchChannel').innerText = "";
@@ -1650,12 +1322,16 @@
                 return;
             }
             const dataObj = dataSnap.val();
-            const totalChunks = dataObj.totalChunks;
+            const totalChunks = Number(dataObj.totalChunks) || 0;
+            const loadingDetails = document.getElementById('videoLoadingDetails');
+            loadingDetails.innerText = `${totalChunks} chunk${totalChunks === 1 ? '' : 's'} found • ${totalChunks === 1 ? 'single source' : '5 MB chunks'}`;
+            loadingText.innerText = `Loading video chunks (0/${totalChunks})`;
 
             if (totalChunks === 1 && dataObj["Video-Chunk1"].startsWith("http")) {
                 videoPlayer.src = dataObj["Video-Chunk1"];
                 loadingFill.style.width = '100%';
                 loadingText.innerText = 'Loading direct link source (1/1)';
+                loadingDetails.innerText = '1 chunk found • direct video source';
             } else {
                 const parts = [];
                 for (let i = 1; i <= totalChunks; i++) {
