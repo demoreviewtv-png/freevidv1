@@ -169,14 +169,14 @@
             <div id="shortsContainer" class="shorts-container"></div>
         </div>
 
-        <div id="channelView" class="view">
+        <div id="channelView" class="view" style="padding: 20px; border-radius: 8px;">
             <button onclick="switchView('homeView')">← Back to Feed</button>
-            <div class="channel-header" id="channelHeaderBox">
+            <div class="channel-header" id="channelHeaderBox" style="margin-top: 15px;">
                 <div id="channelPageAvatar"></div>
                 <h2 id="channelPageTitle" style="margin: 5px 0 0 0;"></h2>
                 <div id="channelFollowActionContainer"></div>
             </div>
-            <h3>Uploaded Videos</h3>
+            <h3 id="channelVideoSectionTitle">Uploaded Videos</h3>
             <div id="channelVideoGrid" class="video-grid"></div>
         </div>
 
@@ -622,10 +622,17 @@
             }
 
             if (viewId !== 'channelView') {
-                document.getElementById('channelView').style.backgroundColor = "";
-                document.getElementById('channelView').style.color = "";
-                document.getElementById('channelHeaderBox').style.backgroundColor = "";
-                document.getElementById('channelHeaderBox').style.color = "";
+                const chanViewEl = document.getElementById('channelView');
+                const chanHeaderEl = document.getElementById('channelHeaderBox');
+                const chanTitleEl = document.getElementById('channelPageTitle');
+                const chanVidTitleEl = document.getElementById('channelVideoSectionTitle');
+                
+                chanViewEl.style.backgroundColor = "";
+                chanViewEl.style.color = "";
+                chanHeaderEl.style.backgroundColor = "";
+                chanHeaderEl.style.color = "";
+                chanTitleEl.style.color = "";
+                if(chanVidTitleEl) chanVidTitleEl.style.color = "";
             }
 
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
@@ -1288,11 +1295,16 @@
 
             const chanView = document.getElementById('channelView');
             const chanHeader = document.getElementById('channelHeaderBox');
+            const chanTitle = document.getElementById('channelPageTitle');
+            const chanVidTitle = document.getElementById('channelVideoSectionTitle');
+
+            // Apply targeted theme styling safely so video cards and other contents remain readable
             chanView.style.backgroundColor = theme.bgColor;
             chanView.style.color = theme.textColor;
             chanHeader.style.backgroundColor = theme.headerColor;
             chanHeader.style.color = theme.textColor;
-            document.getElementById('channelPageTitle').style.color = theme.accentColor;
+            chanTitle.style.color = theme.accentColor;
+            if(chanVidTitle) chanVidTitle.style.color = theme.accentColor;
 
             avatarContainer.innerHTML = renderPfpElement(creatorName, pfpUrl, 90);
             renderFollowButton(creatorKey, creatorName, 'channelFollowActionContainer');
