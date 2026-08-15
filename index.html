@@ -39,6 +39,12 @@
         .follow-btn.following { background: #e0e0e0; color: #333; }
         .follow-btn:hover { opacity: 0.85; }
 
+        /* Action Buttons (Like & Share) */
+        .action-row { display: flex; gap: 10px; align-items: center; margin: 10px 0; }
+        .action-btn { background: #f1f1f1; border: none; border-radius: 20px; padding: 6px 14px; font-size: 13px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 5px; color: #333; width: auto; }
+        .action-btn:hover { background: #e0e0e0; }
+        .action-btn.liked { background: #ff0000; color: white; }
+
         /* Notification Bell Badge */
         .notif-badge-btn { background: none; border: none; font-size: 18px; cursor: pointer; position: relative; padding: 5px 10px; width: auto; color: #333; }
         .notif-count { position: absolute; top: 0; right: 0; background: #ff0000; color: white; font-size: 10px; padding: 2px 5px; border-radius: 50%; font-weight: bold; display: none; }
@@ -73,14 +79,15 @@
         .load-bar-fill { height: 100%; background: #ff0000; width: 0%; transition: width 0.1s linear; }
         .load-bar-text { font-size: 13px; font-weight: bold; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
 
-        .shorts-container { display: flex; flex-direction: column; align-items: center; gap: 30px; padding-bottom: 50px; }
+        /* Shorts Container Setup for Single Viewing */
+        .shorts-container { display: flex; flex-direction: column; align-items: center; gap: 15px; padding-bottom: 20px; }
         .short-card { background: #000; border-radius: 12px; width: 100%; max-width: 360px; height: 640px; position: relative; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; }
         .short-card video { width: 100%; height: 100%; object-fit: contain; background: #000; max-height: none; border-radius: 0; }
         .short-overlay { position: absolute; bottom: 0; left: 0; right: 0; padding: 20px; background: linear-gradient(transparent, rgba(0,0,0,0.8)); color: white; display: flex; flex-direction: column; gap: 8px; z-index: 2; pointer-events: none; }
         .short-overlay .channel-name { color: #ddd; font-weight: bold; pointer-events: auto; }
         .short-overlay .video-title { font-size: 16px; margin: 0; }
 
-        .comments-section { margin-top: 20px; background: #fff; padding: 15px; border-radius: 8px; }
+        .comments-section { margin-top: 20px; background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
         input, button, textarea, select { padding: 10px; margin: 5px 0; box-sizing: border-box; width: 100%; }
         button { background: #ff0000; color: white; border: none; font-weight: bold; cursor: pointer; border-radius: 4px; width: auto; padding: 10px 20px; }
         button:hover { background: #cc0000; }
@@ -90,7 +97,7 @@
         .progress-bar-fill { height: 100%; background: #ff0000; width: 0%; transition: width 0.1s ease; }
         .progress-bar-text { position: absolute; width: 100%; top: 0; left: 0; text-align: center; font-size: 12px; font-weight: bold; line-height: 22px; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
 
-        .channel-header { background: white; padding: 30px; border-radius: 8px; text-align: center; margin-bottom: 25px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); transition: background 0.3s, color 0.3s; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+        .channel-header { padding: 30px; border-radius: 8px; text-align: center; margin-bottom: 25px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); transition: background 0.3s, color 0.3s; display: flex; flex-direction: column; align-items: center; gap: 10px; }
         .channel-header .pfp-avatar { width: 90px; height: 90px; font-size: 36px; margin: 0 auto; }
         .loader { text-align: center; padding: 40px; font-weight: bold; color: #666; font-size: 18px; }
         #authStatus { font-weight: bold; color: #0066cc; }
@@ -167,6 +174,10 @@
         <div id="shortsView" class="view">
             <h2>Shorts</h2>
             <div id="shortsContainer" class="shorts-container"></div>
+            <div style="display: flex; justify-content: center; gap: 15px; margin-top: 15px;">
+                <button id="shortPrevBtn" onclick="navigateShort(-1)" disabled>Previous Short</button>
+                <button id="shortNextBtn" onclick="navigateShort(1)">Next Short</button>
+            </div>
         </div>
 
         <div id="channelView" class="view" style="padding: 20px; border-radius: 8px;">
@@ -259,7 +270,7 @@
         <div id="watchView" class="view">
             <button onclick="switchView('homeView')">← Back to Feed</button>
             <h2 id="watchTitle"></h2>
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; flex-wrap: wrap; gap: 10px;">
                 <div style="display: flex; align-items: center; gap: 12px;">
                     <div id="watchPfpContainer"></div>
                     <div>
@@ -267,6 +278,14 @@
                     </div>
                 </div>
                 <div id="watchFollowContainer"></div>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+                <div style="font-size: 13px; color: #666; font-weight: bold;" id="watchViewCountDisplay">Views: 0</div>
+                <div class="action-row" style="margin: 0;">
+                    <button class="action-btn" id="likeBtn" onclick="toggleLikeVideo()">👍 <span id="likeCountDisplay">0</span></button>
+                    <button class="action-btn" onclick="shareCurrentVideo()">🔗 Share</button>
+                </div>
             </div>
             
             <div class="video-player-wrapper" id="playerWrapper">
@@ -298,9 +317,7 @@
             
             <div class="comments-section">
                 <h3>Comments</h3>
-                <input type="text" id="commentUser" placeholder="Your Name">
-                <textarea id="commentText" placeholder="Add a comment..."></textarea>
-                <button onclick="postComment()">Post Comment</button>
+                <div id="commentInputArea"></div>
                 <div id="commentsList" style="margin-top: 15px;"></div>
             </div>
         </div>
@@ -326,11 +343,17 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const database = getDatabase(app);
-        const CHUNK_SIZE = 1 * 1024 * 1024;
+        
+        // 5 MB chunk option configured here
+        const CHUNK_SIZE = 5 * 1024 * 1024;
 
         let loggedInUser = null;
         let userChannelKey = null;
         let activeVideoId = null;
+
+        // Shorts Navigation State
+        let cachedShorts = [];
+        let currentShortIndex = 0;
 
         const videoPlayer = document.getElementById('videoPlayer');
         const playPauseBtn = document.getElementById('playPauseBtn');
@@ -508,7 +531,7 @@
             const container = document.getElementById(containerElementId);
             if(!container) return;
 
-            if(!loggedInUser || userChannelKey === targetChannelKey) {
+            if(!loggedInUser || !userChannelKey || userChannelKey === targetChannelKey) {
                 container.innerHTML = "";
                 return;
             }
@@ -518,7 +541,7 @@
 
             const btn = document.createElement('button');
             btn.className = `follow-btn ${isFollowing ? 'following' : ''}`;
-            btn.innerText = isFollowing ? 'Following ✓' : `Follow @${targetChannelName}`;
+            btn.innerText = isFollowing ? 'Following ✓' : `Subscribe @${targetChannelName}`;
             btn.onclick = async (e) => {
                 e.stopPropagation();
                 if(isFollowing) {
@@ -535,6 +558,20 @@
             };
             container.innerHTML = "";
             container.appendChild(btn);
+        }
+
+        window.shareCurrentVideo = function() {
+            if(!activeVideoId) return;
+            const currentUrl = window.location.href.split('#')[0] + "#watch=" + activeVideoId;
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(currentUrl).then(() => {
+                    alert("Video link copied to clipboard!");
+                }).catch(() => {
+                    prompt("Copy video link:", currentUrl);
+                });
+            } else {
+                prompt("Copy video link:", currentUrl);
+            }
         }
 
         async function updateNotificationsBadge() {
@@ -818,7 +855,9 @@
                 await Promise.all([
                     remove(ref(database, `video-details/${videoId}`)),
                     remove(ref(database, `video-data/${videoId}`)),
-                    remove(ref(database, `comments/${videoId}`))
+                    remove(ref(database, `comments/${videoId}`)),
+                    remove(ref(database, `likes/${videoId}`)),
+                    remove(ref(database, `views/${videoId}`))
                 ]);
                 alert("Video deleted successfully.");
                 if(document.getElementById('watchView').classList.contains('active')) {
@@ -1181,6 +1220,7 @@
             });
         }
 
+        // Updated Shorts Feed: Loads only ONE short at a time with Navigation buttons
         async function loadShortsFeed() {
             const container = document.getElementById('shortsContainer');
             container.innerHTML = '<div class="loader">Loading shorts...</div>';
@@ -1189,12 +1229,6 @@
                 get(child(ref(database), 'video-details')),
                 get(child(ref(database), 'channels'))
             ]);
-            container.innerHTML = "";
-
-            if (!snap.exists()) {
-                container.innerHTML = "<p>No shorts found.</p>";
-                return;
-            }
 
             const channelsMap = {};
             if(channelsSnap.exists()) {
@@ -1203,72 +1237,102 @@
                 });
             }
 
-            const shortKeys = [];
-            snap.forEach((vidSnap) => {
-                const details = vidSnap.val();
-                if (details["isShort"] === true) {
-                    shortKeys.push({ key: vidSnap.key, details });
-                }
-            });
+            cachedShorts = [];
+            if (snap.exists()) {
+                snap.forEach((vidSnap) => {
+                    const details = vidSnap.val();
+                    if (details["isShort"] === true) {
+                        cachedShorts.push({ key: vidSnap.key, details });
+                    }
+                });
+            }
 
-            if (shortKeys.length === 0) {
+            currentShortIndex = 0;
+            if (cachedShorts.length === 0) {
                 container.innerHTML = "<p>No vertical or square shorts under 2 minutes available yet.</p>";
+                document.getElementById('shortPrevBtn').style.display = 'none';
+                document.getElementById('shortNextBtn').style.display = 'none';
                 return;
             }
 
-            for (const item of shortKeys) {
-                const vidSnapKey = item.key;
-                const details = item.details;
-                const creatorKey = details["CreatorKey"] || "";
-                const creatorName = (channelsMap[creatorKey]) ? channelsMap[creatorKey] : (details["Video-Creator"] || "Unknown");
-                
-                const shortCard = document.createElement('div');
-                shortCard.className = 'short-card';
-                
-                let ownerActionsHtml = "";
-                if(loggedInUser && userChannelKey === creatorKey) {
-                    ownerActionsHtml = `
-                        <div class="owner-actions-overlay">
-                            <button class="owner-action-badge" onclick="event.stopPropagation(); renameVideo('${vidSnapKey}', '${escapeHtml(details["Video-name"])}')">Rename</button>
-                            <button class="owner-action-badge" onclick="event.stopPropagation(); deleteVideo('${vidSnapKey}')">Delete</button>
-                        </div>
-                    `;
-                }
+            document.getElementById('shortPrevBtn').style.display = 'inline-block';
+            document.getElementById('shortNextBtn').style.display = 'inline-block';
+            renderCurrentShort();
+        }
 
-                const videoEl = document.createElement('video');
-                videoEl.controls = true;
-                videoEl.loop = true;
-                videoEl.setAttribute('playsinline', '');
-                
-                const dataSnap = await get(child(ref(database), `video-data/${vidSnapKey}`));
-                if(dataSnap.exists()) {
-                    const dataObj = dataSnap.val();
-                    const totalChunks = dataObj.totalChunks;
-                    
-                    if (totalChunks === 1 && dataObj["Video-Chunk1"].startsWith("http")) {
-                        videoEl.src = dataObj["Video-Chunk1"];
-                    } else {
-                        const parts = [];
-                        for (let i = 1; i <= totalChunks; i++) {
-                            const res = await fetch(dataObj[`Video-Chunk${i}`]);
-                            parts.push(await res.blob());
-                        }
-                        videoEl.src = URL.createObjectURL(new Blob(parts, { type: 'video/mp4' }));
-                    }
-                }
+        async function renderCurrentShort() {
+            const container = document.getElementById('shortsContainer');
+            container.innerHTML = '<div class="loader">Loading short...</div>';
 
-                const overlay = document.createElement('div');
-                overlay.className = 'short-overlay';
-                overlay.innerHTML = `
-                    <div class="channel-name" onclick="openChannelPage('${creatorKey}', '${escapeHtml(creatorName)}')">${escapeHtml(creatorName)}</div>
-                    <div class="video-title">${escapeHtml(details["Video-name"])}</div>
+            if (cachedShorts.length === 0) return;
+
+            const item = cachedShorts[currentShortIndex];
+            const vidSnapKey = item.key;
+            const details = item.details;
+            const creatorKey = details["CreatorKey"] || "";
+            const channelsSnap = await get(child(ref(database), `channels/${creatorKey}`));
+            const creatorName = (channelsSnap.exists() && channelsSnap.val().name) ? channelsSnap.val().name : (details["Video-Creator"] || "Unknown");
+
+            const shortCard = document.createElement('div');
+            shortCard.className = 'short-card';
+
+            let ownerActionsHtml = "";
+            if(loggedInUser && userChannelKey === creatorKey) {
+                ownerActionsHtml = `
+                    <div class="owner-actions-overlay">
+                        <button class="owner-action-badge" onclick="event.stopPropagation(); renameVideo('${vidSnapKey}', '${escapeHtml(details["Video-name"])}')">Rename</button>
+                        <button class="owner-action-badge" onclick="event.stopPropagation(); deleteVideo('${vidSnapKey}')">Delete</button>
+                    </div>
                 `;
-
-                shortCard.innerHTML = ownerActionsHtml;
-                shortCard.appendChild(videoEl);
-                shortCard.appendChild(overlay);
-                container.appendChild(shortCard);
             }
+
+            const videoEl = document.createElement('video');
+            videoEl.controls = true;
+            videoEl.loop = true;
+            videoEl.autoplay = true;
+            videoEl.setAttribute('playsinline', '');
+
+            const dataSnap = await get(child(ref(database), `video-data/${vidSnapKey}`));
+            if(dataSnap.exists()) {
+                const dataObj = dataSnap.val();
+                const totalChunks = dataObj.totalChunks;
+                
+                if (totalChunks === 1 && dataObj["Video-Chunk1"].startsWith("http")) {
+                    videoEl.src = dataObj["Video-Chunk1"];
+                } else {
+                    const parts = [];
+                    for (let i = 1; i <= totalChunks; i++) {
+                        const res = await fetch(dataObj[`Video-Chunk${i}`]);
+                        parts.push(await res.blob());
+                    }
+                    videoEl.src = URL.createObjectURL(new Blob(parts, { type: 'video/mp4' }));
+                }
+            }
+
+            const overlay = document.createElement('div');
+            overlay.className = 'short-overlay';
+            overlay.innerHTML = `
+                <div class="channel-name" onclick="openChannelPage('${creatorKey}', '${escapeHtml(creatorName)}')">${escapeHtml(creatorName)}</div>
+                <div class="video-title">${escapeHtml(details["Video-name"])}</div>
+            `;
+
+            shortCard.innerHTML = ownerActionsHtml;
+            shortCard.appendChild(videoEl);
+            shortCard.appendChild(overlay);
+
+            container.innerHTML = "";
+            container.appendChild(shortCard);
+
+            // Update navigation button states
+            document.getElementById('shortPrevBtn').disabled = currentShortIndex === 0;
+            document.getElementById('shortNextBtn').disabled = currentShortIndex === cachedShorts.length - 1;
+        }
+
+        window.navigateShort = function(direction) {
+            currentShortIndex += direction;
+            if (currentShortIndex < 0) currentShortIndex = 0;
+            if (currentShortIndex >= cachedShorts.length) currentShortIndex = cachedShorts.length - 1;
+            renderCurrentShort();
         }
 
         window.openChannelPage = async function(creatorKey, defaultName) {
@@ -1298,7 +1362,6 @@
             const chanTitle = document.getElementById('channelPageTitle');
             const chanVidTitle = document.getElementById('channelVideoSectionTitle');
 
-            // Apply targeted theme styling safely so video cards and other contents remain readable
             chanView.style.backgroundColor = theme.bgColor;
             chanView.style.color = theme.textColor;
             chanHeader.style.backgroundColor = theme.headerColor;
@@ -1354,6 +1417,49 @@
             }
         }
 
+        window.toggleLikeVideo = async function() {
+            if(!loggedInUser || !userChannelKey || !activeVideoId) {
+                alert("Please log in with an active channel to like videos.");
+                return;
+            }
+            const likeRef = ref(database, `likes/${activeVideoId}/${userChannelKey}`);
+            const likeSnap = await get(likeRef);
+            if(likeSnap.exists()) {
+                await set(likeRef, null);
+            } else {
+                await set(likeRef, true);
+            }
+            updateLikeAndCountStatus(activeVideoId);
+        }
+
+        async function updateLikeAndCountStatus(videoId) {
+            const likesSnap = await get(child(ref(database), `likes/${videoId}`));
+            let likeCount = 0;
+            let userLiked = false;
+            if(likesSnap.exists()) {
+                likesSnap.forEach(l => {
+                    likeCount++;
+                    if(userChannelKey && l.key === userChannelKey) {
+                        userLiked = true;
+                    }
+                });
+            }
+            document.getElementById('likeCountDisplay').innerText = likeCount;
+            const likeBtn = document.getElementById('likeBtn');
+            if(userLiked) {
+                likeBtn.classList.add('liked');
+            } else {
+                likeBtn.classList.remove('liked');
+            }
+
+            const viewsSnap = await get(child(ref(database), `views/${videoId}`));
+            let viewCount = 0;
+            if(viewsSnap.exists()) {
+                viewsSnap.forEach(() => { viewCount++; });
+            }
+            document.getElementById('watchViewCountDisplay').innerText = `Views: ${viewCount}`;
+        }
+
         window.watchVideo = async function(videoId) {
             activeVideoId = videoId;
             switchView('watchView');
@@ -1371,6 +1477,10 @@
             document.getElementById('watchFollowContainer').innerHTML = "";
             document.getElementById('commentsList').innerHTML = "";
             videoPlayer.src = "";
+
+            if(loggedInUser && userChannelKey) {
+                await set(ref(database, `views/${videoId}/${userChannelKey}`), true);
+            }
 
             const detailsSnap = await get(child(ref(database), `video-details/${videoId}`));
             if (!detailsSnap.exists()) {
@@ -1403,6 +1513,7 @@
             document.getElementById('watchPfpContainer').appendChild(pfpWrap);
 
             renderFollowButton(creatorKey, creatorName, 'watchFollowContainer');
+            updateLikeAndCountStatus(videoId);
 
             const dataSnap = await get(child(ref(database), `video-data/${videoId}`));
             if (!dataSnap.exists()) {
@@ -1433,25 +1544,36 @@
             loadingOverlay.classList.add('hidden');
             videoPlayer.play();
 
+            renderCommentInputSection();
             loadComments(videoId);
         }
 
+        function renderCommentInputSection() {
+            const container = document.getElementById('commentInputArea');
+            if(!loggedInUser || !userChannelKey) {
+                container.innerHTML = `<p style="color: #666; font-size: 14px;">Please <a href="#" onclick="switchView('authView')" style="color:#0066cc; font-weight:bold;">log in and setup your channel</a> to post comments.</p>`;
+                return;
+            }
+            container.innerHTML = `
+                <textarea id="commentText" placeholder="Add a public comment as your channel..."></textarea>
+                <button onclick="postComment()">Post Comment</button>
+            `;
+        }
+
         window.postComment = async function() {
-            let authorName = "Anonymous";
-            if(loggedInUser && userChannelKey) {
-                const chanSnap = await get(child(ref(database), `channels/${userChannelKey}`));
-                if(chanSnap.exists() && chanSnap.val().name) {
-                    authorName = chanSnap.val().name;
-                }
-            } else {
-                authorName = document.getElementById('commentUser').value.trim() || "Anonymous";
+            if(!loggedInUser || !userChannelKey) {
+                alert("You must be logged in with an active channel profile to post comments.");
+                switchView('authView');
+                return;
             }
 
+            const chanSnap = await get(child(ref(database), `channels/${userChannelKey}`));
+            const authorName = (chanSnap.exists() && chanSnap.val().name) ? chanSnap.val().name : "Creator";
             const text = document.getElementById('commentText').value.trim();
             if(!text || !activeVideoId) return;
 
             const newComRef = push(ref(database, `comments/${activeVideoId}`));
-            await set(newComRef, { user: authorName, text, createdAt: Date.now() });
+            await set(newComRef, { user: authorName, channelKey: userChannelKey, text, createdAt: Date.now() });
             document.getElementById('commentText').value = "";
         }
 
@@ -1461,8 +1583,8 @@
                 const c = snap.val();
                 const div = document.createElement('div');
                 div.style.borderBottom = "1px solid #eee";
-                div.style.padding = "6px 0";
-                div.innerHTML = `<strong>${escapeHtml(c.user)}</strong>: ${escapeHtml(c.text)}`;
+                div.style.padding = "8px 0";
+                div.innerHTML = `<strong style="cursor:pointer; color:#0066cc;" onclick="openChannelPage('${c.channelKey || ''}', '${escapeHtml(c.user)}')">${escapeHtml(c.user)}</strong>: ${escapeHtml(c.text)}`;
                 list.prepend(div);
             });
         }
