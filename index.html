@@ -114,6 +114,8 @@
         .color-picker-row { display: flex; align-items: center; justify-content: space-between; margin: 8px 0; }
         .color-picker-row label { font-size: 14px; font-weight: bold; }
         .color-picker-row input[type="color"] { width: 60px; height: 35px; border: none; cursor: pointer; background: none; }
+        
+        .credit-badge { background: #222; color: #ffd700; padding: 4px 10px; border-radius: 12px; font-size: 13px; font-weight: bold; display: inline-flex; align-items: center; gap: 4px; }
     </style>
 </head>
 <body>
@@ -202,8 +204,15 @@
             </div>
 
             <div class="form-group" id="channelSetupBox" style="display:none;">
-                <h2>Your Channel Customization</h2>
+                <h2>Your Channel Customization & Credits</h2>
                 <p>Logged in Channel: <strong id="currentUserChannelName"></strong></p>
+                <p>Upload Credits Balance: <span id="userCreditsDisplay" class="credit-badge">🪙 0 Credits</span></p>
+                
+                <div style="background: #fff3cd; border: 1px solid #ffeeba; padding: 12px; border-radius: 6px; margin: 15px 0;">
+                    <strong>Need more upload credits?</strong>
+                    <p style="font-size: 13px; margin: 5px 0 10px 0;">Watch ads to earn credits! Every 1 minute watched earns you 3 credits.</p>
+                    <button onclick="openAdWatchModal()" style="background: #ffc107; color: #000;">📺 Watch Ad to Earn Credits</button>
+                </div>
                 
                 <label>Channel Name:</label>
                 <input type="text" id="desiredChannelName" placeholder="Enter your channel name">
@@ -237,8 +246,12 @@
         <div id="uploadView" class="view">
             <div class="form-group">
                 <h2>Publish a Video</h2>
-                <p>Posting as Channel: <strong id="uploaderDisplayHandle">Checking channel...</strong></p>
+                <p>Posting as Channel: <strong id="uploaderDisplayHandle">Checking channel...</strong> | Balance: <span id="uploadViewCreditsDisplay" class="credit-badge">🪙 0 Credits</span></p>
                 
+                <div style="background: #e8f4fd; border: 1px solid #b8daff; padding: 10px; border-radius: 6px; margin-bottom: 15px; font-size: 13px;">
+                    <strong>Upload Pricing Rules:</strong> 5 mins = 10 credits | 1 min = 2 credits | 30 secs = 1 credit | Below 30 secs = 1 credit.
+                </div>
+
                 <div class="upload-tabs">
                     <button class="upload-tab-btn active-tab" id="fileTabBtn" onclick="switchUploadMode('file')">Upload File</button>
                     <button class="upload-tab-btn" id="linkTabBtn" onclick="switchUploadMode('link')">Import via .mp4 Link</button>
@@ -290,7 +303,7 @@
             
             <div class="video-player-wrapper" id="playerWrapper">
                 <div id="videoLoadingOverlay" class="video-loading-overlay">
-                    <div id="videoLoadingText" class="load-bar-text">Loading video chunks (0%)</div>
+                    <div id="videoLoadingText" class="load-bar-text">Loading video chunks (0/0)</div>
                     <div class="load-bar-track">
                         <div id="videoLoadingFill" class="load-bar-fill"></div>
                     </div>
@@ -344,14 +357,11 @@
         const auth = getAuth(app);
         const database = getDatabase(app);
         
-        // 5 MB chunk option configured here
         const CHUNK_SIZE = 5 * 1024 * 1024;
 
         let loggedInUser = null;
         let userChannelKey = null;
         let activeVideoId = null;
-
-        // Shorts Navigation State
         let cachedShorts = [];
         let currentShortIndex = 0;
 
@@ -425,6 +435,80 @@
                 audio.pause();
                 btn.innerText = "Play Vibe";
             }
+        }
+
+        // --- Ad Watching & Credits Logic ---
+        window.openAdWatchModal = async function() {
+            if(!userChannelKey) {
+                alert("Please log in first.");
+                return;
+            }
+
+            const modal = document.createElement('div');
+            modal.id = 'adModalBox';
+            modal.style.cssText = "position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.8); display:flex; justify-content:center; align-items:center; z-index:2000;";
+            modal.innerHTML = `
+                <div style="background:#fff; padding:30px; border-radius:10px; width:400px; text-align:center; box-shadow:0 4px 15px rgba(0,0,0,0.3);">
+                    <h3 style="color:#ff0000; margin-top:0;">📺 Sponsored Ad Simulation</h3>
+                    <p style="font-size:14px; color:#555;">Watch this ad to earn credits! (1 minute = 3 credits)</p>
+                    <div style="background:#000; color:#fff; height:150px; display:flex; align-items:center; justify-content:center; font-weight:bold; border-radius:6px; margin:15px 0; font-size:18px;" id="adTimerDisplay">
+                        Ad Playing: 60s remaining
+                    </div>
+                    <button id="claimCreditsBtn" disabled style="background:#ccc; cursor:not-allowed; width:100%;">Claim 3 Credits</button>
+                    <button onclick="document.getElementById('adModalBox').remove();" style="background:#666; margin-top:5px; width:100%;">Cancel</button>
+                </div>
+            `;
+            document.body.appendChild(modal);
+
+            let timeLeft = 60; // 1 minute simulation (change to lower duration for quick testing if needed)
+            const timerEl = document.getElementById('adTimerDisplay');
+            const claimBtn = document.getElementById('claimCreditsBtn');
+
+            const interval = setInterval(async () => {
+                timeLeft--;
+                if(timeLeft > 0) {
+                    timerEl.innerText = `Ad Playing: ${timeLeft}s remaining`;
+                } else {
+                    clearInterval(interval);
+                    timerEl.innerText = "Ad Finished!";
+                    claimBtn.disabled = false;
+                    claimBtn.style.backgroundColor = "#ff0000";
+                    claimBtn.style.cursor = "pointer";
+                    claimBtn.onclick = async () => {
+                        await addCreditsToUser(3);
+                        modal.remove();
+                        alert("Successfully earned 3 credits!");
+                    };
+                }
+            }, 1000);
+        }
+
+        async function addCreditsToUser(amount) {
+            if(!userChannelKey) return;
+            const creditsRef = ref(database, `channels/${userChannelKey}/credits`);
+            const snap = await get(creditsRef);
+            let currentCredits = snap.exists() ? snap.val() : 0;
+            currentCredits += amount;
+            await set(creditsRef, currentCredits);
+            updateCreditsUI(currentCredits);
+        }
+
+        async function getUserCredits() {
+            if(!userChannelKey) return 0;
+            const snap = await get(child(ref(database), `channels/${userChannelKey}/credits`));
+            return snap.exists() ? snap.val() : 0;
+        }
+
+        async function updateCreditsUI(balance) {
+            document.getElementById('userCreditsDisplay').innerText = `🪙 ${balance} Credits`;
+            document.getElementById('uploadViewCreditsDisplay').innerText = `🪙 ${balance} Credits`;
+        }
+
+        function calculateRequiredCredits(durationInSeconds) {
+            if (durationInSeconds <= 30) return 1;
+            const minutes = durationInSeconds / 60;
+            if (minutes <= 1) return 2;
+            return Math.max(1, Math.ceil(minutes * 2));
         }
 
         window.handleSearchKey = function(e) {
@@ -651,7 +735,7 @@
             }
         }
 
-        window.switchView = function(viewId) {
+        window.switchView = async function(viewId) {
             if (document.getElementById('watchView').classList.contains('active') && viewId !== 'watchView') {
                 videoPlayer.pause();
                 videoPlayer.currentTime = 0;
@@ -683,6 +767,14 @@
 
             if(viewId === 'homeView') loadHomeFeed();
             if(viewId === 'shortsView') loadShortsFeed();
+            if(viewId === 'uploadView' && userChannelKey) {
+                const currentCredits = await getUserCredits();
+                updateCreditsUI(currentCredits);
+            }
+            if(viewId === 'authView' && userChannelKey) {
+                const currentCredits = await getUserCredits();
+                updateCreditsUI(currentCredits);
+            }
         }
 
         function stringToColor(str) {
@@ -734,6 +826,8 @@
             if (userChannelKey) {
                 authStatusEl.innerHTML = `<span style="cursor: pointer; color: #0066cc; text-decoration: underline; font-weight: bold;" onclick="openChannelPage('${userChannelKey}', '${escapeHtml(channelNameVal)}')">${escapeHtml(channelNameVal)}</span>`;
                 updateNotificationsBadge();
+                const currentCredits = await getUserCredits();
+                updateCreditsUI(currentCredits);
             } else {
                 authStatusEl.innerHTML = `<span>(⚠️ Channel Uninitialized)</span>`;
             }
@@ -784,10 +878,11 @@
                     ownerUid: cred.user.uid,
                     name: defaultChannelName,
                     pfp: "",
+                    credits: 5, // Give starting bonus credits
                     theme: { bgColor: "#f9f9f9", headerColor: "#ffffff", textColor: "#111111", accentColor: "#ff0000" },
                     createdAt: Date.now()
                 });
-                alert("Account and channel created successfully!");
+                alert("Account and channel created successfully with 5 starting credits!");
             } catch (err) { alert(err.message); }
         }
 
@@ -828,16 +923,22 @@
             
             const channelsSnap = await get(child(ref(database), `channels/${channelKey}`));
             let pfpData = "";
+            let existingCredits = 5;
             if (pfpFile) {
                 pfpData = await fileToBase64(pfpFile);
             } else if (channelsSnap.exists()) {
                 pfpData = channelsSnap.val().pfp || "";
             }
 
+            if(channelsSnap.exists() && channelsSnap.val().credits !== undefined) {
+                existingCredits = channelsSnap.val().credits;
+            }
+
             await set(ref(database, `channels/${channelKey}`), {
                 ownerUid: loggedInUser.uid,
                 name: channelName,
                 pfp: pfpData,
+                credits: existingCredits,
                 theme: theme,
                 createdAt: channelsSnap.exists() ? channelsSnap.val().createdAt : Date.now()
             });
@@ -932,6 +1033,7 @@
             userChannelKey = loggedInUser.email.replace(/[^a-zA-Z0-9_]/g, "");
             const channelsSnap = await get(child(ref(database), `channels/${userChannelKey}`));
             const channelName = channelsSnap.exists() && channelsSnap.val().name ? channelsSnap.val().name : "Creator";
+            const currentCredits = channelsSnap.exists() && channelsSnap.val().credits !== undefined ? channelsSnap.val().credits : 0;
 
             const file = document.getElementById('videoFile').files[0];
             const videoNameInput = document.getElementById('videoName').value.trim();
@@ -946,6 +1048,22 @@
                 return;
             }
 
+            const videoCheckObj = document.createElement('video');
+            videoCheckObj.src = URL.createObjectURL(file);
+            
+            await new Promise((resolve) => {
+                videoCheckObj.onloadedmetadata = () => resolve();
+                videoCheckObj.onerror = () => resolve();
+            });
+
+            const duration = videoCheckObj.duration || 0;
+            const requiredCredits = calculateRequiredCredits(duration);
+
+            if(currentCredits < requiredCredits) {
+                alert(`Insufficient credits! This video requires ${requiredCredits} credits (Duration: ${Math.round(duration)}s), but you only have ${currentCredits} credits. Watch ads in your Account tab to earn more!`);
+                return;
+            }
+
             publishBtn.disabled = true;
             progressContainer.style.display = 'block';
             status.innerText = "Analyzing video specs...";
@@ -953,15 +1071,6 @@
             progressText.innerText = '2%';
 
             try {
-                const videoCheckObj = document.createElement('video');
-                videoCheckObj.src = URL.createObjectURL(file);
-                
-                await new Promise((resolve) => {
-                    videoCheckObj.onloadedmetadata = () => resolve();
-                    videoCheckObj.onerror = () => resolve();
-                });
-
-                const duration = videoCheckObj.duration || 0;
                 const width = videoCheckObj.videoWidth || 1;
                 const height = videoCheckObj.videoHeight || 1;
                 const isVerticalOrSquare = height >= width;
@@ -1021,6 +1130,11 @@
 
                 await Promise.all(chunkPromises);
 
+                // Deduct credits
+                const updatedCredits = currentCredits - requiredCredits;
+                await set(ref(database, `channels/${userChannelKey}/credits`), updatedCredits);
+                updateCreditsUI(updatedCredits);
+
                 status.innerText = "Finalizing upload...";
                 await Promise.all([
                     set(ref(database, `video-details/${videoId}`), {
@@ -1044,7 +1158,7 @@
                     progressContainer.style.display = 'none';
                     document.getElementById('videoName').value = "";
                     document.getElementById('videoFile').value = "";
-                    alert(isShort ? "Short successfully published!" : "Video successfully published!");
+                    alert(isShort ? `Short successfully published! (${requiredCredits} credits deducted)` : `Video successfully published! (${requiredCredits} credits deducted)`);
                     switchView(isShort ? 'shortsView' : 'homeView');
                 }, 400);
 
@@ -1066,6 +1180,7 @@
             userChannelKey = loggedInUser.email.replace(/[^a-zA-Z0-9_]/g, "");
             const channelsSnap = await get(child(ref(database), `channels/${userChannelKey}`));
             const channelName = channelsSnap.exists() && channelsSnap.val().name ? channelsSnap.val().name : "Creator";
+            const currentCredits = channelsSnap.exists() && channelsSnap.val().credits !== undefined ? channelsSnap.val().credits : 0;
 
             const videoUrl = document.getElementById('videoUrlInput').value.trim();
             const videoNameInput = document.getElementById('videoName').value.trim();
@@ -1091,6 +1206,15 @@
                 });
 
                 const duration = videoCheckObj.duration || 0;
+                const requiredCredits = calculateRequiredCredits(duration);
+
+                if(currentCredits < requiredCredits) {
+                    alert(`Insufficient credits! This video requires ${requiredCredits} credits (Duration: ${Math.round(duration)}s), but you only have ${currentCredits} credits. Watch ads in your Account tab to earn more!`);
+                    publishBtn.disabled = false;
+                    status.innerText = "";
+                    return;
+                }
+
                 const width = videoCheckObj.videoWidth || 1;
                 const height = videoCheckObj.videoHeight || 1;
                 const isVerticalOrSquare = height >= width;
@@ -1125,6 +1249,11 @@
                     vid.onerror = () => resolve("");
                 });
 
+                // Deduct credits
+                const updatedCredits = currentCredits - requiredCredits;
+                await set(ref(database, `channels/${userChannelKey}/credits`), updatedCredits);
+                updateCreditsUI(updatedCredits);
+
                 status.innerText = "Saving imported link to database...";
                 await Promise.all([
                     set(ref(database, `video-details/${videoId}`), {
@@ -1146,7 +1275,7 @@
                 publishBtn.disabled = false;
                 document.getElementById('videoName').value = "";
                 document.getElementById('videoUrlInput').value = "";
-                alert(isShort ? "Short link successfully imported!" : "Video link successfully imported!");
+                alert(isShort ? `Short link successfully imported! (${requiredCredits} credits deducted)` : `Video link successfully imported! (${requiredCredits} credits deducted)`);
                 switchView(isShort ? 'shortsView' : 'homeView');
 
             } catch (err) {
@@ -1220,7 +1349,6 @@
             });
         }
 
-        // Updated Shorts Feed: Loads only ONE short at a time with Navigation buttons
         async function loadShortsFeed() {
             const container = document.getElementById('shortsContainer');
             container.innerHTML = '<div class="loader">Loading shorts...</div>';
@@ -1323,7 +1451,6 @@
             container.innerHTML = "";
             container.appendChild(shortCard);
 
-            // Update navigation button states
             document.getElementById('shortPrevBtn').disabled = currentShortIndex === 0;
             document.getElementById('shortNextBtn').disabled = currentShortIndex === cachedShorts.length - 1;
         }
@@ -1469,7 +1596,7 @@
 
             loadingOverlay.classList.remove('hidden');
             loadingFill.style.width = '0%';
-            loadingText.innerText = 'Fetching video source (0%)';
+            loadingText.innerText = 'Fetching video source (0/0)';
 
             document.getElementById('watchTitle').innerText = "Loading video...";
             document.getElementById('watchChannel').innerText = "";
@@ -1527,7 +1654,7 @@
             if (totalChunks === 1 && dataObj["Video-Chunk1"].startsWith("http")) {
                 videoPlayer.src = dataObj["Video-Chunk1"];
                 loadingFill.style.width = '100%';
-                loadingText.innerText = 'Loading direct link source (100%)';
+                loadingText.innerText = 'Loading direct link source (1/1)';
             } else {
                 const parts = [];
                 for (let i = 1; i <= totalChunks; i++) {
@@ -1536,7 +1663,7 @@
 
                     const pct = Math.round((i / totalChunks) * 100);
                     loadingFill.style.width = pct + '%';
-                    loadingText.innerText = `Loading video chunks (${pct}%)`;
+                    loadingText.innerText = `Loading video chunks (${i}/${totalChunks}) - ${pct}%`;
                 }
                 videoPlayer.src = URL.createObjectURL(new Blob(parts, { type: 'video/mp4' }));
             }
