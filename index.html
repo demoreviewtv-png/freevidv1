@@ -1330,7 +1330,12 @@
                 }
 
                 const viewsMap = {};
-                if(viewsRootSnap && viewsRootSnap.exists()) viewsRootSnap.forEach(v => { viewsMap[v.key] = v.numChildren(); });
+                if(viewsRootSnap && viewsRootSnap.exists()) {
+                    viewsRootSnap.forEach(v => {
+                        const value = v.val();
+                        viewsMap[v.key] = value && typeof value === 'object' ? Object.keys(value).length : 0;
+                    });
+                }
                 const channelsMap = {};
                 if(channelsSnap && channelsSnap.exists()) {
                     channelsSnap.forEach(c => {
