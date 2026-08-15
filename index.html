@@ -19,7 +19,7 @@
         .active { display: block; }
         
         .video-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
-        .video-card { background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); cursor: pointer; }
+        .video-card { background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); cursor: pointer; position: relative; }
         .video-card img { width: 100%; height: 160px; object-fit: cover; background: #000; }
         .video-info { padding: 12px; display: flex; align-items: center; gap: 12px; }
         
@@ -28,6 +28,11 @@
         .video-title { font-weight: bold; font-size: 15px; margin-bottom: 3px; }
         .channel-name { color: #606060; font-size: 13px; cursor: pointer; }
         .channel-name:hover { text-decoration: underline; color: #000; }
+
+        /* Owner Manage Actions Badge on Video Card */
+        .owner-actions-overlay { position: absolute; top: 10px; right: 10px; display: flex; gap: 5px; z-index: 3; }
+        .owner-action-badge { background: rgba(0,0,0,0.75); color: white; border: none; padding: 5px 10px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer; width: auto; }
+        .owner-action-badge:hover { background: #ff0000; }
 
         /* Follow Button Style */
         .follow-btn { background: #111; color: #fff; border: none; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: bold; cursor: pointer; transition: background 0.2s; width: auto; margin-top: 5px; }
@@ -178,6 +183,7 @@
         <div id="authView" class="view">
             <div class="form-group" id="loginBox">
                 <h2>Account Login / Sign Up</h2>
+                <p style="font-size: 13px; color: #666;">Note: Each email can only create one channel profile.</p>
                 <input type="email" id="authEmail" placeholder="Email">
                 <input type="password" id="authPassword" placeholder="Password">
                 <button onclick="handleSignUp()">Register New Account</button>
@@ -304,7 +310,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getDatabase, ref, set, get, child, push, onChildAdded } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+        import { getDatabase, ref, set, get, child, push, onChildAdded, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCZwwg8vlYo3LV_k4I9BydIcbKkU_xO9a8",
@@ -320,7 +326,7 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const database = getDatabase(app);
-        const CHUNK_SIZE = 1 * 1024 * 1024; // 1MB chunks
+        const CHUNK_SIZE = 1 * 1024 * 1024;
 
         let loggedInUser = null;
         let userChannelKey = null;
@@ -398,7 +404,6 @@
             }
         }
 
-        // Search Bar Handlers
         window.handleSearchKey = function(e) {
             if (e.key === 'Enter') {
                 triggerSearch();
@@ -417,7 +422,6 @@
             chanContainer.innerHTML = '<div class="loader">Searching channels...</div>';
             vidGrid.innerHTML = '<div class="loader">Searching videos...</div>';
 
-            // Fetch Channels and Videos
             const [channelsSnap, videosSnap] = await Promise.all([
                 get(child(ref(database), 'channels')),
                 get(child(ref(database), 'video-details'))
@@ -463,14 +467,26 @@
                     const details = vSnap.val();
                     const vName = details["Video-name"] || "";
                     const vCreator = details["Video-Creator"] || "";
+                    const creatorKey = details["CreatorKey"] || "";
                     
                     if(vName.toLowerCase().includes(query) || vCreator.toLowerCase().includes(query)) {
                         foundVideos++;
-                        const creatorKey = details["CreatorKey"] || "";
                         const card = document.createElement('div');
                         card.className = 'video-card';
                         card.onclick = () => watchVideo(vKey);
+
+                        let ownerActionsHtml = "";
+                        if(loggedInUser && userChannelKey === creatorKey) {
+                            ownerActionsHtml = `
+                                <div class="owner-actions-overlay">
+                                    <button class="owner-action-badge" onclick="event.stopPropagation(); renameVideo('${vKey}', '${escapeHtml(vName)}')">Rename</button>
+                                    <button class="owner-action-badge" onclick="event.stopPropagation(); deleteVideo('${vKey}')">Delete</button>
+                                </div>
+                            `;
+                        }
+
                         card.innerHTML = `
+                            ${ownerActionsHtml}
                             <img src="${details["Video-Thumbnail"] || ''}" loading="eager">
                             <div class="video-info">
                                 <div>
@@ -488,13 +504,12 @@
             }
         }
 
-        // Follow & Notifications System Logic
         async function renderFollowButton(targetChannelKey, containerElementId) {
             const container = document.getElementById(containerElementId);
             if(!container) return;
 
             if(!loggedInUser || userChannelKey === targetChannelKey) {
-                container.innerHTML = ""; // Don't show follow button to self or guests
+                container.innerHTML = "";
                 return;
             }
 
@@ -562,14 +577,12 @@
                             <strong>${escapeHtml(data.channelName)}</strong> uploaded a new video: <em>${escapeHtml(data.videoTitle)}</em>
                         </div>
                     `;
-                    // Mark as read
                     set(ref(database, `notifications/${userChannelKey}/${n.key}/read`), true);
                 });
                 listHtml += "</div>";
                 htmlContent += listHtml;
             }
 
-            // Simple popup modal representation
             const existingModal = document.getElementById('notifModalBox');
             if(existingModal) existingModal.remove();
 
@@ -682,6 +695,7 @@
 
             const handleText = userChannelKey ? channelNameVal : "⚠️ Setup Channel in Account Tab First";
             document.getElementById('uploaderDisplayHandle').innerText = handleText;
+            document.getElementById('currentUserEmail').innerText = handleText;
         }
 
         onAuthStateChanged(auth, async (user) => {
@@ -691,16 +705,6 @@
                 document.getElementById('loginBox').style.display = 'none';
                 
                 await syncUserChannel(user);
-                const channelsSnap = await get(child(ref(database), 'channels'));
-                let foundName = user.email.split('@')[0];
-                if(channelsSnap.exists()) {
-                    channelsSnap.forEach((chanSnap) => {
-                        if(chanSnap.val().ownerUid === user.uid && chanSnap.val().name) {
-                            foundName = chanSnap.val().name;
-                        }
-                    });
-                }
-                document.getElementById('currentUserEmail').innerText = foundName;
 
                 document.getElementById('channelSetupBox').style.display = 'block';
                 document.getElementById('uploadNavBtn').style.display = 'inline-block';
@@ -717,15 +721,25 @@
         });
 
         window.handleSignUp = async function() {
-            const email = document.getElementById('authEmail').value.trim();
+            const email = document.getElementById('authEmail').value.trim().toLowerCase();
             const pass = document.getElementById('authPassword').value;
             if(!email) { alert("Please provide an email."); return; }
+
+            // Strict Unique Check: Ensure email isn't already used as a channel key base
+            const channelKey = email.replace(/[^a-zA-Z0-9_]/g, "");
+            const existingChannelSnap = await get(child(ref(database), `channels/${channelKey}`));
+            if (existingChannelSnap.exists()) {
+                alert("A channel or account already exists with this exact email address! Please log in instead.");
+                return;
+            }
+
             try {
                 const cred = await createUserWithEmailAndPassword(auth, email, pass);
-                const channelKey = email.replace(/[^a-zA-Z0-9_]/g, "");
+                const defaultChannelName = email.split('@')[0];
                 await set(ref(database, `channels/${channelKey}`), {
                     ownerUid: cred.user.uid,
-                    name: email.split('@')[0],
+                    email: email,
+                    name: defaultChannelName,
                     pfp: "",
                     theme: { bgColor: "#f9f9f9", headerColor: "#ffffff", textColor: "#111111", accentColor: "#ff0000" },
                     createdAt: Date.now()
@@ -735,8 +749,9 @@
         }
 
         window.handleLogin = async function() {
-            const email = document.getElementById('authEmail').value;
+            const email = document.getElementById('authEmail').value.trim().toLowerCase();
             const pass = document.getElementById('authPassword').value;
+            if(!email) { alert("Please provide an email."); return; }
             try {
                 await signInWithEmailAndPassword(auth, email, pass);
                 switchView('homeView');
@@ -778,6 +793,7 @@
 
             await set(ref(database, `channels/${channelKey}`), {
                 ownerUid: loggedInUser.uid,
+                email: loggedInUser.email,
                 name: channelName,
                 pfp: pfpData,
                 theme: theme,
@@ -786,10 +802,53 @@
 
             userChannelKey = channelKey;
             await syncUserChannel(loggedInUser);
-            document.getElementById('currentUserEmail').innerText = channelName;
             statusText.innerText = "Channel profile & themes saved!";
             alert("Customized channel preferences saved successfully!");
             switchView('homeView');
+        }
+
+        window.deleteVideo = async function(videoId) {
+            if(!confirm("Are you sure you want to permanently delete this video?")) return;
+            try {
+                await Promise.all([
+                    remove(ref(database, `video-details/${videoId}`)),
+                    remove(ref(database, `video-data/${videoId}`)),
+                    remove(ref(database, `comments/${videoId}`))
+                ]);
+                alert("Video deleted successfully.");
+                if(document.getElementById('watchView').classList.contains('active')) {
+                    switchView('homeView');
+                } else if(document.getElementById('searchView').classList.contains('active')) {
+                    triggerSearch();
+                } else if(document.getElementById('channelView').classList.contains('active') && userChannelKey) {
+                    openChannelPage(userChannelKey, document.getElementById('channelPageTitle').innerText);
+                } else {
+                    loadHomeFeed();
+                }
+            } catch(err) {
+                alert("Failed to delete video: " + err.message);
+            }
+        }
+
+        window.renameVideo = async function(videoId, currentTitle) {
+            const newTitle = prompt("Enter a new title for your video:", currentTitle);
+            if(!newTitle || !newTitle.trim()) return;
+            const trimmedTitle = newTitle.trim();
+            try {
+                await set(ref(database, `video-details/${videoId}/Video-name`), trimmedTitle);
+                alert("Video renamed successfully!");
+                if(document.getElementById('watchView').classList.contains('active')) {
+                    document.getElementById('watchTitle').innerText = trimmedTitle;
+                } else if(document.getElementById('searchView').classList.contains('active')) {
+                    triggerSearch();
+                } else if(document.getElementById('channelView').classList.contains('active') && userChannelKey) {
+                    openChannelPage(userChannelKey, document.getElementById('channelPageTitle').innerText);
+                } else {
+                    loadHomeFeed();
+                }
+            } catch(err) {
+                alert("Failed to rename video: " + err.message);
+            }
         }
 
         function fileToBase64(file) {
@@ -800,7 +859,6 @@
             });
         }
 
-        // Send notifications to all followers when a video is published
         async function triggerFollowerNotifications(creatorKey, channelName, videoId, videoTitle) {
             const subsSnap = await get(child(ref(database), `subscribers/${creatorKey}`));
             if(subsSnap.exists()) {
@@ -931,7 +989,6 @@
                     set(ref(database, `video-data/${videoId}/totalChunks`), totalChunks)
                 ]);
 
-                // Fire notifications to followers
                 await triggerFollowerNotifications(userChannelKey, channelName, videoId, videoNameInput);
 
                 progressFill.style.width = '100%';
@@ -1039,7 +1096,6 @@
                     })
                 ]);
 
-                // Fire notifications to followers
                 await triggerFollowerNotifications(userChannelKey, channelName, videoId, videoNameInput);
 
                 status.innerText = "Import complete!";
@@ -1081,16 +1137,28 @@
             }
 
             snap.forEach((vidSnap) => {
+                const vidKey = vidSnap.key;
                 const details = vidSnap.val();
                 const creatorKey = details["CreatorKey"] || "";
-                const creatorName = details["Video-Creator"] || (channelsMap[creatorKey] ? channelsMap[creatorKey].name : "Unknown");
+                const creatorName = (channelsMap[creatorKey] && channelsMap[creatorKey].name) ? channelsMap[creatorKey].name : (details["Video-Creator"] || "Unknown");
                 const pfpUrl = (channelsMap[creatorKey] && channelsMap[creatorKey].pfp) ? channelsMap[creatorKey].pfp : "";
                 const pfpHtml = renderPfpElement(creatorName, pfpUrl, 50);
 
                 const card = document.createElement('div');
                 card.className = 'video-card';
                 
+                let ownerActionsHtml = "";
+                if(loggedInUser && userChannelKey === creatorKey) {
+                    ownerActionsHtml = `
+                        <div class="owner-actions-overlay">
+                            <button class="owner-action-badge" onclick="event.stopPropagation(); renameVideo('${vidKey}', '${escapeHtml(details["Video-name"])}')">Rename</button>
+                            <button class="owner-action-badge" onclick="event.stopPropagation(); deleteVideo('${vidKey}')">Delete</button>
+                        </div>
+                    `;
+                }
+
                 card.innerHTML = `
+                    ${ownerActionsHtml}
                     <img src="${details["Video-Thumbnail"] || ''}" loading="eager" fetchpriority="high">
                     <div class="video-info">
                         <div class="card-pfp-wrap">${pfpHtml}</div>
@@ -1101,8 +1169,8 @@
                     </div>
                 `;
                 
-                card.querySelector('img').onclick = () => watchVideo(vidSnap.key);
-                card.querySelector('.video-title').onclick = () => watchVideo(vidSnap.key);
+                card.querySelector('img').onclick = () => watchVideo(vidKey);
+                card.querySelector('.video-title').onclick = () => watchVideo(vidKey);
                 
                 grid.appendChild(card);
             });
@@ -1112,12 +1180,22 @@
             const container = document.getElementById('shortsContainer');
             container.innerHTML = '<div class="loader">Loading shorts...</div>';
 
-            const snap = await get(child(ref(database), 'video-details'));
+            const [snap, channelsSnap] = await Promise.all([
+                get(child(ref(database), 'video-details')),
+                get(child(ref(database), 'channels'))
+            ]);
             container.innerHTML = "";
 
             if (!snap.exists()) {
                 container.innerHTML = "<p>No shorts found.</p>";
                 return;
+            }
+
+            const channelsMap = {};
+            if(channelsSnap.exists()) {
+                channelsSnap.forEach(c => {
+                    channelsMap[c.key] = c.val().name || c.key;
+                });
             }
 
             const shortKeys = [];
@@ -1136,10 +1214,22 @@
             for (const item of shortKeys) {
                 const vidSnapKey = item.key;
                 const details = item.details;
+                const creatorKey = details["CreatorKey"] || "";
+                const creatorName = (channelsMap[creatorKey]) ? channelsMap[creatorKey] : (details["Video-Creator"] || "Unknown");
                 
                 const shortCard = document.createElement('div');
                 shortCard.className = 'short-card';
                 
+                let ownerActionsHtml = "";
+                if(loggedInUser && userChannelKey === creatorKey) {
+                    ownerActionsHtml = `
+                        <div class="owner-actions-overlay">
+                            <button class="owner-action-badge" onclick="event.stopPropagation(); renameVideo('${vidSnapKey}', '${escapeHtml(details["Video-name"])}')">Rename</button>
+                            <button class="owner-action-badge" onclick="event.stopPropagation(); deleteVideo('${vidSnapKey}')">Delete</button>
+                        </div>
+                    `;
+                }
+
                 const videoEl = document.createElement('video');
                 videoEl.controls = true;
                 videoEl.loop = true;
@@ -1165,34 +1255,38 @@
                 const overlay = document.createElement('div');
                 overlay.className = 'short-overlay';
                 overlay.innerHTML = `
-                    <div class="channel-name" onclick="openChannelPage('${details["CreatorKey"]}', '${escapeHtml(details["Video-Creator"])}')">${escapeHtml(details["Video-Creator"])}</div>
+                    <div class="channel-name" onclick="openChannelPage('${creatorKey}', '${escapeHtml(creatorName)}')">${escapeHtml(creatorName)}</div>
                     <div class="video-title">${escapeHtml(details["Video-name"])}</div>
                 `;
 
+                shortCard.innerHTML = ownerActionsHtml;
                 shortCard.appendChild(videoEl);
                 shortCard.appendChild(overlay);
                 container.appendChild(shortCard);
             }
         }
 
-        window.openChannelPage = async function(creatorKey, creatorName) {
+        window.openChannelPage = async function(creatorKey, defaultName) {
             switchView('channelView');
-            document.getElementById('channelPageTitle').innerText = creatorName;
             
-            const avatarContainer = document.getElementById('channelPageAvatar');
-            avatarContainer.innerHTML = "";
-
             const chanSnap = await get(child(ref(database), `channels/${creatorKey}`));
+            let creatorName = defaultName;
             let pfpUrl = "";
             let theme = { bgColor: "#f9f9f9", headerColor: "#ffffff", textColor: "#111111", accentColor: "#ff0000" };
 
             if (chanSnap.exists()) {
                 const chanData = chanSnap.val();
+                if(chanData.name) creatorName = chanData.name;
                 pfpUrl = chanData.pfp || "";
                 if(chanData.theme) {
                     theme = { ...theme, ...chanData.theme };
                 }
             }
+
+            document.getElementById('channelPageTitle').innerText = creatorName;
+            
+            const avatarContainer = document.getElementById('channelPageAvatar');
+            avatarContainer.innerHTML = "";
 
             const chanView = document.getElementById('channelView');
             const chanHeader = document.getElementById('channelHeaderBox');
@@ -1213,13 +1307,26 @@
 
             let foundAny = false;
             snap.forEach((vidSnap) => {
+                const vidKey = vidSnap.key;
                 const details = vidSnap.val();
                 if (details["CreatorKey"] === creatorKey) {
                     foundAny = true;
                     const card = document.createElement('div');
                     card.className = 'video-card';
-                    card.onclick = () => watchVideo(vidSnap.key);
+                    card.onclick = () => watchVideo(vidKey);
+
+                    let ownerActionsHtml = "";
+                    if(loggedInUser && userChannelKey === creatorKey) {
+                        ownerActionsHtml = `
+                            <div class="owner-actions-overlay">
+                                <button class="owner-action-badge" onclick="event.stopPropagation(); renameVideo('${vidKey}', '${escapeHtml(details["Video-name"])}')">Rename</button>
+                                <button class="owner-action-badge" onclick="event.stopPropagation(); deleteVideo('${vidKey}')">Delete</button>
+                            </div>
+                        `;
+                    }
+
                     card.innerHTML = `
+                        ${ownerActionsHtml}
                         <img src="${details["Video-Thumbnail"] || ''}" loading="eager">
                         <div class="video-info">
                             <div>
@@ -1256,16 +1363,28 @@
             videoPlayer.src = "";
 
             const detailsSnap = await get(child(ref(database), `video-details/${videoId}`));
+            if (!detailsSnap.exists()) {
+                alert("This video has been deleted or no longer exists.");
+                switchView('homeView');
+                return;
+            }
             const details = detailsSnap.val();
 
             document.getElementById('watchTitle').innerText = details["Video-name"];
-            const creatorName = details["Video-Creator"];
             const creatorKey = details["CreatorKey"];
+
+            const chanSnap = await get(child(ref(database), `channels/${creatorKey}`));
+            let creatorName = details["Video-Creator"];
+            let pfpUrl = "";
+            if (chanSnap.exists()) {
+                const chanData = chanSnap.val();
+                if(chanData.name) creatorName = chanData.name;
+                pfpUrl = chanData.pfp || "";
+            }
+
             document.getElementById('watchChannel').innerText = creatorName;
             document.getElementById('watchChannel').onclick = () => openChannelPage(creatorKey, creatorName);
 
-            const chanSnap = await get(child(ref(database), `channels/${creatorKey}`));
-            let pfpUrl = chanSnap.exists() ? chanSnap.val().pfp || "" : "";
             const watchAvatarEl = renderPfpElement(creatorName, pfpUrl, 50);
             const pfpWrap = document.createElement('div');
             pfpWrap.innerHTML = watchAvatarEl;
@@ -1276,6 +1395,11 @@
             renderFollowButton(creatorKey, 'watchFollowContainer');
 
             const dataSnap = await get(child(ref(database), `video-data/${videoId}`));
+            if (!dataSnap.exists()) {
+                alert("Video stream chunks are missing.");
+                switchView('homeView');
+                return;
+            }
             const dataObj = dataSnap.val();
             const totalChunks = dataObj.totalChunks;
 
@@ -1303,12 +1427,23 @@
         }
 
         window.postComment = async function() {
-            const user = document.getElementById('commentUser').value.trim() || (loggedInUser ? loggedInUser.email.split('@')[0] : "Anonymous");
+            let authorName = "Anonymous";
+            if(loggedInUser && userChannelKey) {
+                const chanSnap = await get(child(ref(database), `channels/${userChannelKey}`));
+                if(chanSnap.exists() && chanSnap.val().name) {
+                    authorName = chanSnap.val().name;
+                } else {
+                    authorName = loggedInUser.email.split('@')[0];
+                }
+            } else {
+                authorName = document.getElementById('commentUser').value.trim() || "Anonymous";
+            }
+
             const text = document.getElementById('commentText').value.trim();
             if(!text || !activeVideoId) return;
 
             const newComRef = push(ref(database, `comments/${activeVideoId}`));
-            await set(newComRef, { user, text, createdAt: Date.now() });
+            await set(newComRef, { user: authorName, text, createdAt: Date.now() });
             document.getElementById('commentText').value = "";
         }
 
