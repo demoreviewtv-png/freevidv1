@@ -517,21 +517,28 @@
         }
 
         window.triggerSearch = async function() {
-            const query = document.getElementById('searchInput').value.trim().toLowerCase();
-            if(!query) return;
-            
-            switchView('searchView');
+            const input = document.getElementById('searchInput');
+            const query = input.value.trim().toLowerCase();
+            if(!query) {
+                switchView('homeView');
+                return;
+            }
+
+            // Switch immediately so the search page cannot appear to be stuck on Home.
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.getElementById('searchView').classList.add('active');
             document.getElementById('searchQueryTitle').innerText = `Search Results for "${escapeHtml(query)}"`;
-            
+
             const chanContainer = document.getElementById('searchChannelResults');
             const vidGrid = document.getElementById('searchVideoGrid');
             chanContainer.innerHTML = '<div class="loader">Searching channels...</div>';
             vidGrid.innerHTML = '<div class="loader">Searching videos...</div>';
 
-            const [channelsSnap, videosSnap] = await Promise.all([
-                get(child(ref(database), 'channels')),
-                get(child(ref(database), 'video-details'))
-            ]);
+            try {
+                const [channelsSnap, videosSnap] = await Promise.all([
+                    get(child(ref(database), 'channels')),
+                    get(child(ref(database), 'video-details'))
+                ]);
 
             chanContainer.innerHTML = "";
             vidGrid.innerHTML = "";
@@ -607,6 +614,11 @@
             }
             if(foundVideos === 0) {
                 vidGrid.innerHTML = "<p>No matching videos found.</p>";
+            }
+            } catch (err) {
+                console.error('Search failed:', err);
+                chanContainer.innerHTML = '<p>Could not load channel results.</p>';
+                vidGrid.innerHTML = `<p style="color:#b00020;">Could not load video results: ${escapeHtml(err.message || 'Unknown error')}</p>`;
             }
         }
 
@@ -1296,71 +1308,63 @@
 
         async function loadHomeFeed() {
             const grid = document.getElementById('videoGrid');
+            if(!grid) return;
             grid.innerHTML = '<div class="loader">Loading videos...</div>';
-            
-            const snap = await get(child(ref(database), 'video-details'));
-            grid.innerHTML = "";
 
-            if (!snap.exists()) {
-                grid.innerHTML = "<p>No videos found.</p>";
-                return;
-            }
-
-            const [channelsSnap, viewsRootSnap] = await Promise.all([
-                get(child(ref(database), 'channels')),
-                get(child(ref(database), 'views'))
-            ]);
-            const viewsMap = {};
-            if(viewsRootSnap.exists()) viewsRootSnap.forEach(v => { viewsMap[v.key] = v.numChildren(); });
-            const channelsMap = {};
-            if(channelsSnap.exists()) {
-                channelsSnap.forEach(c => {
-                    channelsMap[c.key] = {
-                        name: c.val().name || c.key,
-                        pfp: c.val().pfp || ""
-                    };
-                });
-            }
-
-            snap.forEach((vidSnap) => {
-                const vidKey = vidSnap.key;
-                const details = vidSnap.val();
-                const creatorKey = details["CreatorKey"] || "";
-                const creatorName = (channelsMap[creatorKey] && channelsMap[creatorKey].name) ? channelsMap[creatorKey].name : (details["Video-Creator"] || "Unknown");
-                const pfpUrl = (channelsMap[creatorKey] && channelsMap[creatorKey].pfp) ? channelsMap[creatorKey].pfp : "";
-                const pfpHtml = renderPfpElement(creatorName, pfpUrl, 50);
-
-                const card = document.createElement('div');
-                card.className = 'video-card';
-                
-                let ownerActionsHtml = "";
-                if(loggedInUser && userChannelKey === creatorKey) {
-                    ownerActionsHtml = `
-                        <div class="owner-actions-overlay">
-                            <button class="owner-action-badge" onclick="event.stopPropagation(); renameVideo('${vidKey}', '${escapeHtml(details["Video-name"])}')">Rename</button>
-                            <button class="owner-action-badge" onclick="event.stopPropagation(); deleteVideo('${vidKey}')">Delete</button>
-                        </div>
-                    `;
+            try {
+                const snap = await get(child(ref(database), 'video-details'));
+                if (!snap.exists()) {
+                    grid.innerHTML = "<p>No videos found.</p>";
+                    return;
                 }
 
-                card.innerHTML = `
-                    ${ownerActionsHtml}
-                    <img src="${details["Video-Thumbnail"] || ''}" loading="eager" fetchpriority="high">
-                    <div class="video-info">
-                        <div class="card-pfp-wrap">${pfpHtml}</div>
-                        <div>
-                            <div class="video-title">${escapeHtml(details["Video-name"])}</div>
-                            <div class="channel-name" onclick="event.stopPropagation(); openChannelPage('${creatorKey}', '${escapeHtml(creatorName)}')">${escapeHtml(creatorName)}</div>
-                            <div style="font-size:12px;color:#777;margin-top:4px;">${viewsMap[vidKey] || 0} views</div>
-                        </div>
-                    </div>
-                `;
-                
-                card.querySelector('img').onclick = () => watchVideo(vidKey);
-                card.querySelector('.video-title').onclick = () => watchVideo(vidKey);
-                
-                grid.appendChild(card);
-            });
+                let channelsSnap = null;
+                let viewsRootSnap = null;
+                try {
+                    [channelsSnap, viewsRootSnap] = await Promise.all([
+                        get(child(ref(database), 'channels')),
+                        get(child(ref(database), 'views'))
+                    ]);
+                } catch (metaErr) {
+                    console.warn('Optional channel/view data unavailable:', metaErr);
+                }
+
+                const viewsMap = {};
+                if(viewsRootSnap && viewsRootSnap.exists()) viewsRootSnap.forEach(v => { viewsMap[v.key] = v.numChildren(); });
+                const channelsMap = {};
+                if(channelsSnap && channelsSnap.exists()) {
+                    channelsSnap.forEach(c => {
+                        channelsMap[c.key] = { name: c.val().name || c.key, pfp: c.val().pfp || "" };
+                    });
+                }
+
+                grid.innerHTML = '';
+                snap.forEach((vidSnap) => {
+                    const vidKey = vidSnap.key;
+                    const details = vidSnap.val() || {};
+                    const creatorKey = details["CreatorKey"] || "";
+                    const creatorName = (channelsMap[creatorKey] && channelsMap[creatorKey].name) ? channelsMap[creatorKey].name : (details["Video-Creator"] || "Unknown");
+                    const pfpUrl = (channelsMap[creatorKey] && channelsMap[creatorKey].pfp) ? channelsMap[creatorKey].pfp : "";
+                    const card = document.createElement('div');
+                    card.className = 'video-card';
+                    card.onclick = () => watchVideo(vidKey);
+                    let ownerActionsHtml = '';
+                    if(loggedInUser && userChannelKey === creatorKey) {
+                        ownerActionsHtml = `<div class="owner-actions-overlay"><button class="owner-action-badge" onclick="event.stopPropagation(); renameVideo('${vidKey}', '${escapeHtml(details["Video-name"] || '')}')">Rename</button><button class="owner-action-badge" onclick="event.stopPropagation(); deleteVideo('${vidKey}')">Delete</button></div>`;
+                    }
+                    card.innerHTML = `${ownerActionsHtml}<img src="${details["Video-Thumbnail"] || ''}" loading="eager"><div class="video-info"><div class="card-pfp-wrap">${renderPfpElement(creatorName, pfpUrl, 50)}</div><div><div class="video-title">${escapeHtml(details["Video-name"] || 'Untitled video')}</div><div class="channel-name">${escapeHtml(creatorName)}</div><div style="font-size:12px;color:#777;margin-top:4px;">${viewsMap[vidKey] || 0} views</div></div></div>`;
+                    const img = card.querySelector('img');
+                    if(img) img.onclick = (e) => { e.stopPropagation(); watchVideo(vidKey); };
+                    const title = card.querySelector('.video-title');
+                    if(title) title.onclick = (e) => { e.stopPropagation(); watchVideo(vidKey); };
+                    const channel = card.querySelector('.channel-name');
+                    if(channel) channel.onclick = (e) => { e.stopPropagation(); openChannelPage(creatorKey, creatorName); };
+                    grid.appendChild(card);
+                });
+            } catch (err) {
+                console.error('Home feed failed:', err);
+                grid.innerHTML = `<p style="color:#b00020;">Could not load videos: ${escapeHtml(err.message || 'Unknown error')}</p>`;
+            }
         }
 
         async function loadShortsFeed() {
