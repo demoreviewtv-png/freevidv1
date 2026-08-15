@@ -1679,25 +1679,52 @@
             document.getElementById('videoLoadingText').innerText = `Found ${totalChunks} video chunk${totalChunks === 1 ? '' : 's'}`;
             document.getElementById('videoLoadingDetails').innerText = totalChunks === 1 ? '1 chunk • direct source or single stored chunk' : `${totalChunks} chunks • 5 MB chunk size`;
 
-            if (totalChunks === 1 && typeof dataObj["Video-Chunk1"] === 'string' && dataObj["Video-Chunk1"].startsWith("http")) {
-                videoPlayer.src = dataObj["Video-Chunk1"];
+            const firstChunk = dataObj["Video-Chunk1"];
+            if (totalChunks === 1 && typeof firstChunk === 'string' && (firstChunk.startsWith("http://") || firstChunk.startsWith("https://") || firstChunk.startsWith("data:video/"))) {
+                // Imported videos use a normal URL; uploaded videos use a data URL.
+                videoPlayer.src = firstChunk;
                 loadingFill.style.width = '100%';
-                loadingText.innerText = 'Loading direct link source (1/1)';
+                loadingText.innerText = firstChunk.startsWith('data:') ? 'Loading uploaded video (1/1)' : 'Loading direct link source (1/1)';
             } else {
                 const parts = [];
                 for (let i = 1; i <= totalChunks; i++) {
-                    const res = await fetch(dataObj[`Video-Chunk${i}`]);
-                    parts.push(await res.blob());
+                    const source = dataObj[`Video-Chunk${i}`];
+                    if (typeof source !== 'string' || !source) {
+                        throw new Error(`Video chunk ${i} is missing or invalid.`);
+                    }
 
+                    // Firebase uploads are stored as data URLs. Imported links are HTTP(S).
+                    // fetch() supports both data URLs and HTTP(S), so both formats can use the same loader.
+                    let blob;
+                    if (source.startsWith('data:')) {
+                        const response = await fetch(source);
+                        blob = await response.blob();
+                    } else if (source.startsWith('http://') || source.startsWith('https://')) {
+                        const response = await fetch(source);
+                        if (!response.ok) throw new Error(`Chunk ${i} returned HTTP ${response.status}.`);
+                        blob = await response.blob();
+                    } else {
+                        // Backward compatibility for raw base64 chunks without a data: prefix.
+                        const binary = atob(source);
+                        const bytes = new Uint8Array(binary.length);
+                        for (let j = 0; j < binary.length; j++) bytes[j] = binary.charCodeAt(j);
+                        blob = new Blob([bytes], { type: 'video/mp4' });
+                    }
+
+                    parts.push(blob);
                     const pct = Math.round((i / totalChunks) * 100);
                     loadingFill.style.width = pct + '%';
                     loadingText.innerText = `Loading video chunks (${i}/${totalChunks}) - ${pct}%`;
                 }
-                videoPlayer.src = URL.createObjectURL(new Blob(parts, { type: 'video/mp4' }));
+
+                const combinedBlob = new Blob(parts, { type: 'video/mp4' });
+                videoPlayer.src = URL.createObjectURL(combinedBlob);
             }
-            
-            loadingOverlay.classList.add('hidden');
-            videoPlayer.play();
+
+            loadingText.innerText = totalChunks === 1 ? 'Video ready' : `Video ready — ${totalChunks} chunks loaded`;
+            loadingFill.style.width = '100%';
+            setTimeout(() => loadingOverlay.classList.add('hidden'), 150);
+            videoPlayer.play().catch(() => {});
 
             renderCommentInputSection();
             loadComments(videoId);
