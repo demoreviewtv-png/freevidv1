@@ -304,6 +304,7 @@
                 <div class="action-row" style="margin: 0;">
                     <button class="action-btn" id="likeBtn" onclick="toggleLikeVideo()">👍 <span id="likeCountDisplay">0</span></button>
                     <button class="action-btn" onclick="shareCurrentVideo()">🔗 Share</button>
+                    <button class="action-btn" id="downloadVideoBtn" onclick="downloadCurrentVideo()">⬇ Download</button>
                 </div>
             </div>
             
@@ -1611,6 +1612,67 @@
             document.getElementById('watchViewCountDisplay').innerText = `Views: ${viewCount}`;
         }
 
+        let currentVideoDownloadUrl = "";
+        let currentVideoDownloadBlob = null;
+        let currentVideoFileName = "video.mp4";
+
+        function setDownloadState(enabled) {
+            const btn = document.getElementById("downloadVideoBtn");
+            if (!btn) return;
+            btn.disabled = !enabled;
+            btn.innerText = enabled ? "⬇ Download" : "⬇ Preparing...";
+        }
+
+        async function downloadCurrentVideo() {
+            if (!currentVideoDownloadUrl && !currentVideoDownloadBlob) {
+                alert("The video is still loading. Please wait until it is ready.");
+                return;
+            }
+            const btn = document.getElementById("downloadVideoBtn");
+            try {
+                if (btn) { btn.disabled = true; btn.innerText = "⬇ Preparing download..."; }
+                let blob = currentVideoDownloadBlob;
+                if (!blob && currentVideoDownloadUrl) {
+                    if (currentVideoDownloadUrl.startsWith("blob:")) {
+                        const response = await fetch(currentVideoDownloadUrl);
+                        blob = await response.blob();
+                    } else if (currentVideoDownloadUrl.startsWith("data:")) {
+                        const response = await fetch(currentVideoDownloadUrl);
+                        blob = await response.blob();
+                    } else {
+                        const response = await fetch(currentVideoDownloadUrl);
+                        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                        blob = await response.blob();
+                    }
+                }
+                if (blob) {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = currentVideoFileName || "video.mp4";
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    setTimeout(() => URL.revokeObjectURL(url), 30000);
+                }
+            } catch (err) {
+                console.error("Download failed:", err);
+                if (currentVideoDownloadUrl) {
+                    const a = document.createElement("a");
+                    a.href = currentVideoDownloadUrl;
+                    a.download = currentVideoFileName || "video.mp4";
+                    a.target = "_blank";
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                } else {
+                    alert("Could not download this video: " + err.message);
+                }
+            } finally {
+                if (btn) { btn.disabled = false; btn.innerText = "⬇ Download"; }
+            }
+        }
+
         window.watchVideo = async function(videoId) {
             activeVideoId = videoId;
             switchView('watchView');
@@ -1628,6 +1690,10 @@
             document.getElementById('watchFollowContainer').innerHTML = "";
             document.getElementById('commentsList').innerHTML = "";
             videoPlayer.src = "";
+            currentVideoDownloadUrl = "";
+            currentVideoDownloadBlob = null;
+            currentVideoFileName = "video.mp4";
+            setDownloadState(false);
 
             try {
             if(loggedInUser && userChannelKey) {
@@ -1641,6 +1707,8 @@
                 return;
             }
             const details = detailsSnap.val();
+            currentVideoFileName = ((details["Video-name"] || "video") + "").replace(/[^a-z0-9._ -]/gi, "_").trim() || "video";
+            currentVideoFileName += /\.(mp4|webm|ogg|mov)$/i.test(currentVideoFileName) ? "" : ".mp4";
 
             document.getElementById('watchTitle').innerText = details["Video-name"];
             const creatorKey = details["CreatorKey"];
@@ -1703,6 +1771,7 @@
             if (totalChunks === 1 && /^(https?:\/\/|data:video\/)/i.test(firstChunk)) {
                 setLoadStatus('Loading video source (1/1)', 35, '1 chunk found • loading the video source');
                 videoPlayer.src = firstChunk;
+                currentVideoDownloadUrl = firstChunk;
                 await new Promise((resolve, reject) => {
                     const ok = () => { cleanup(); resolve(); };
                     const bad = () => { cleanup(); reject(new Error('The video source could not be decoded by the browser.')); };
@@ -1715,6 +1784,7 @@
                     setTimeout(() => { if (videoPlayer.readyState >= 1) ok(); }, 15000);
                 });
                 setLoadStatus('Video ready — 1/1 chunk loaded', 100, 'Playback source loaded successfully');
+                setDownloadState(true);
             } else {
                 const parts = [];
                 const mimeType = dataObj.mimeType || 'video/mp4';
@@ -1777,7 +1847,9 @@
 
                 setLoadStatus('Combining video chunks...', 90, `Combining ${totalChunks} chunks into one playable video`);
                 const combinedBlob = new Blob(parts, {type: mimeType});
+                currentVideoDownloadBlob = combinedBlob;
                 const objectUrl = URL.createObjectURL(combinedBlob);
+                currentVideoDownloadUrl = objectUrl;
                 videoPlayer.src = objectUrl;
 
                 setLoadStatus('Checking video playback...', 95, 'All chunks loaded • waiting for the browser to decode the video');
@@ -1803,6 +1875,7 @@
                     100,
                     `All ${totalChunks} chunks loaded successfully • ${mimeType}`
                 );
+                setDownloadState(true);
             }
 
             setTimeout(() => loadingOverlay.classList.add('hidden'), 700);
