@@ -131,10 +131,10 @@
     </div>
 
     <script>
-        // 🌐 Connects straight to your public video repo folder via GitHub's API!
-        const GITHUB_API_URL = "https://api.github.com/repos/demoreviewtv-png/FREEVID-Vidstorage/contents/videos";
-        const VIDEO_FOLDER = "https://raw.githubusercontent.com/demoreviewtv-png/FREEVID-Vidstorage/main/videos/";
-        const THUMBNAIL_FOLDER = "https://raw.githubusercontent.com/demoreviewtv-png/FREEVID-Vidstorage/main/videos/thumbnails/";
+        // 🌐 Updated to point to freevidv1 repository on the 'Videos' branch
+        const GITHUB_API_URL = "https://api.github.com/repos/demoreviewtv-png/freevidv1/contents/videos?ref=Videos";
+        const VIDEO_FOLDER = "https://raw.githubusercontent.com/demoreviewtv-png/freevidv1/Videos/videos/";
+        const THUMBNAIL_FOLDER = "https://raw.githubusercontent.com/demoreviewtv-png/freevidv1/Videos/videos/thumbnails/";
 
         let serverVideos = [];
         let currentlyPlayingTitle = "";
@@ -179,7 +179,7 @@
                     status.textContent = "Connected to storage, but no videos found inside /videos.";
                 }
             } catch (err) {
-                status.textContent = "Error: Couldn't read GitHub storage. Make sure the FREEVID-Vidstorage repo is PUBLIC!";
+                status.textContent = "Error: Couldn't read GitHub storage. Make sure the freevidv1 repo and Videos branch are PUBLIC!";
             }
         }
 
@@ -315,7 +315,7 @@
             player.removeAttribute('src'); player.load(); 
             document.getElementById('videoWrapper').style.display = "none";
             document.getElementById('search').value = "";
-            document.getElementById('status').textContent = `Successfully synced! (${serverVideos.length} videos found)`;
+            document.getElementById('status').textContent = `Successfully synced! (${serverVideos.length} found)`;
             document.getElementById('downloadBtn').style.display = "none";
             document.getElementById('loopBtn').style.display = "none";
             document.getElementById('resetBtn').style.display = "none";
