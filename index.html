@@ -1,1941 +1,332 @@
-<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Freevid!</title>
+    <title>FREEVID!!</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 0; background: #f9f9f9; color: #111; transition: background 0.3s, color 0.3s; }
-        header { background: #fff; padding: 15px 30px; display: flex; justify-content: space-between; border-bottom: 1px solid #ddd; align-items: center; flex-wrap: wrap; gap: 10px; }
-        h1 { margin: 0; color: #ff0000; font-size: 24px; cursor: pointer; }
+        body { font-family: Arial, sans-serif; display: flex; flex-direction: column; align-items: center; padding: 20px; background: #f4f4f9; }
+        .search-container { position: relative; width: 100%; max-width: 600px; margin-bottom: 15px; }
+        input { width: 100%; padding: 12px; font-size: 16px; box-sizing: border-box; border: 2px solid #ccc; border-radius: 4px; }
+        .results { position: absolute; width: 100%; background: white; border: 1px solid #ccc; max-height: 200px; overflow-y: auto; z-index: 10; display: none; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .results div { padding: 10px; cursor: pointer; }
+        .results div:hover { background: #eee; }
         
-        /* Search Bar Styles */
-        .search-container { display: flex; align-items: center; background: #f1f1f1; border-radius: 20px; padding: 5px 15px; width: 300px; border: 1px solid #ccc; }
-        .search-container input { border: none; background: transparent; outline: none; width: 100%; font-size: 14px; padding: 5px; }
-        .search-container button { background: none; border: none; cursor: pointer; color: #555; padding: 0 5px; font-size: 16px; width: auto; }
+        .top-nav { display: flex; gap: 12px; margin-bottom: 25px; flex-wrap: wrap; justify-content: center; }
 
-        .container { max-width: 1000px; margin: 20px auto; padding: 0 15px; }
-        .view { display: none; }
-        .active { display: block; }
+        .forms-btn {
+            display: inline-flex; align-items: center; gap: 10px; background-color: #7248b9; color: white;
+            text-decoration: none; padding: 10px 20px; font-size: 15px; font-weight: bold; border-radius: 4px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2); transition: background 0.2s ease, transform 0.1s ease;
+        }
+        .forms-btn:hover { background-color: #5b379b; }
+        .forms-icon { width: 18px; height: 18px; }
+
+        .about-btn {
+            display: inline-flex; align-items: center; gap: 10px; background-color: #17a2b8; color: white;
+            border: none; padding: 10px 20px; font-size: 15px; font-weight: bold; border-radius: 4px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2); cursor: pointer; transition: background 0.2s ease;
+        }
+        .about-btn:hover { background-color: #138496; }
+
+        .video-wrapper {
+            width: 100%; max-width: 800px; background: #000; border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3); overflow: hidden; display: none; justify-content: center; align-items: center;
+        }
+        video { width: 100%; max-height: 70vh; background: black; object-fit: contain; display: block; }
         
-        .video-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
-        .video-card { background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); cursor: pointer; position: relative; }
-        .video-card img { width: 100%; height: 160px; object-fit: cover; background: #000; }
-        .video-info { padding: 12px; display: flex; align-items: center; gap: 12px; }
+        .info-container { margin-top: 15px; margin-bottom: 8px; text-align: center; }
+        .status-msg { margin: 0; color: #333; font-weight: bold; font-size: 18px; }
+
+        .actions-wrapper { display: flex; gap: 12px; margin-bottom: 20px; }
+
+        .download-btn {
+            display: inline-flex; align-items: center; gap: 8px; background-color: #007BFF; color: white;
+            text-decoration: none; padding: 8px 16px; font-size: 14px; font-weight: bold; border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: background 0.2s ease; display: none; 
+        }
+        .download-btn:hover { background-color: #0056b3; }
         
-        .pfp-avatar { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-weight: bold; color: white; font-size: 20px; text-transform: uppercase; background: #ccc; }
-        
-        .video-title { font-weight: bold; font-size: 15px; margin-bottom: 3px; }
-        .channel-name { color: #606060; font-size: 13px; cursor: pointer; }
-        .channel-name:hover { text-decoration: underline; color: #000; }
+        .loop-btn {
+            display: inline-flex; align-items: center; gap: 8px; background-color: #6c757d; color: white;
+            border: none; padding: 8px 16px; font-size: 14px; font-weight: bold; border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1); cursor: pointer; transition: background 0.2s ease; display: none;
+        }
+        .loop-btn.active { background-color: #28a745; }
+        .loop-btn.active:hover { background-color: #218838; }
 
-        /* Owner Manage Actions Badge on Video Card */
-        .owner-actions-overlay { position: absolute; top: 10px; right: 10px; display: flex; gap: 5px; z-index: 3; }
-        .owner-action-badge { background: rgba(0,0,0,0.75); color: white; border: none; padding: 5px 10px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer; width: auto; }
-        .owner-action-badge:hover { background: #ff0000; }
+        .reset-btn {
+            display: inline-flex; align-items: center; gap: 8px; background-color: #6c757d; color: white;
+            border: none; padding: 8px 16px; font-size: 14px; font-weight: bold; border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1); cursor: pointer; display: none; 
+        }
+        .btn-icon { width: 16px; height: 16px; }
 
-        /* Follow Button Style */
-        .follow-btn { background: #111; color: #fff; border: none; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: bold; cursor: pointer; transition: background 0.2s; width: auto; margin-top: 5px; }
-        .follow-btn.following { background: #e0e0e0; color: #333; }
-        .follow-btn:hover { opacity: 0.85; }
+        .reroll-btn {
+            display: inline-flex; align-items: center; gap: 6px; background-color: #007BFF; color: white;
+            border: none; padding: 6px 12px; font-size: 13px; font-weight: bold; border-radius: 4px;
+            cursor: pointer;
+        }
 
-        /* Action Buttons (Like & Share) */
-        .action-row { display: flex; gap: 10px; align-items: center; margin: 10px 0; }
-        .action-btn { background: #f1f1f1; border: none; border-radius: 20px; padding: 6px 14px; font-size: 13px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 5px; color: #333; width: auto; }
-        .action-btn:hover { background: #e0e0e0; }
-        .action-btn.liked { background: #ff0000; color: white; }
+        .creator-section { width: 100%; max-width: 800px; margin-top: 20px; }
+        .section-header-container { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #ccc; padding-bottom: 8px; margin-bottom: 15px; }
+        .creator-section h2 { font-size: 18px; color: #444; margin: 0; }
+        .thumbnail-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 15px; width: 100%; }
+        .video-card { background: white; border: 1px solid #ddd; border-radius: 6px; overflow: hidden; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.05); transition: transform 0.2s, border-color 0.2s; }
+        .video-card:hover { transform: translateY(-3px); border-color: #007BFF; }
+        .thumb-preview { width: 100%; aspect-ratio: 16 / 9; background: #000; overflow: hidden; }
+        .thumb-preview img { width: 100%; height: 100%; object-fit: cover; }
+        .card-details { padding: 10px; }
+        .card-title { font-size: 14px; font-weight: bold; color: #333; text-overflow: ellipsis; white-space: nowrap; overflow: hidden; display: flex; align-items: center; }
+        .card-title .title-duration { font-weight: normal; color: #777; font-family: monospace; font-size: 12px; background: #eee; padding: 2px 5px; border-radius: 3px; margin-right: 8px; flex-shrink: 0; }
+        .card-creator { font-size: 12px; color: #666; margin-top: 4px; text-overflow: ellipsis; white-space: nowrap; overflow: hidden; }
 
-        /* Notification Bell Badge */
-        .notif-badge-btn { background: none; border: none; font-size: 18px; cursor: pointer; position: relative; padding: 5px 10px; width: auto; color: #333; }
-        .notif-count { position: absolute; top: 0; right: 0; background: #ff0000; color: white; font-size: 10px; padding: 2px 5px; border-radius: 50%; font-weight: bold; display: none; }
-        
-        /* Search Results View Styling */
-        .search-results-section { margin-bottom: 30px; }
-        .channel-row-card { background: #fff; padding: 15px; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 10px; }
-        .channel-row-left { display: flex; align-items: center; gap: 15px; cursor: pointer; }
-
-        /* Dynamic video wrapper & controls */
-        .video-player-wrapper { position: relative; width: 100%; background: black; border-radius: 8px; overflow: hidden; max-height: 550px; display: flex; justify-content: center; align-items: center; }
-        video.custom-video { width: 100%; height: 100%; max-height: 550px; object-fit: contain; display: block; background: black; }
-        
-        .video-player-wrapper:fullscreen { max-height: none; width: 100vw; height: 100vh; display: flex; justify-content: center; align-items: center; border-radius: 0; }
-        .video-player-wrapper:fullscreen video.custom-video { max-height: 100vh; width: 100vw; height: 100vh; object-fit: contain; }
-
-        .custom-controls-bar { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(transparent, rgba(0,0,0,0.85)); padding: 15px 15px 10px 15px; display: flex; flex-direction: column; gap: 8px; opacity: 0; transition: opacity 0.3s ease; z-index: 5; }
-        .video-player-wrapper:hover .custom-controls-bar { opacity: 1; }
-        
-        .control-timeline-track { width: 100%; height: 6px; background: rgba(255,255,255,0.3); border-radius: 3px; cursor: pointer; position: relative; overflow: hidden; }
-        .control-timeline-fill { height: 100%; background: #ff0000; width: 0%; pointer-events: none; }
-
-        .control-row { display: flex; justify-content: space-between; align-items: center; color: white; }
-        .control-row-left, .control-row-right { display: flex; align-items: center; gap: 15px; }
-        .ctrl-btn { background: none; border: none; color: white; font-size: 16px; cursor: pointer; padding: 0; width: auto; font-weight: bold; }
-        .ctrl-btn:hover { color: #ff0000; background: none; }
-        .time-display { font-size: 13px; font-weight: bold; font-family: monospace; }
-
-        .video-loading-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; flex-direction: column; justify-content: center; align-items: center; color: white; z-index: 10; transition: opacity 0.3s ease; }
-        .video-loading-overlay.hidden { opacity: 0; pointer-events: none; }
-        .load-bar-track { width: 60%; max-width: 300px; background: rgba(255,255,255,0.3); border-radius: 6px; height: 16px; overflow: hidden; position: relative; margin-top: 10px; }
-        .load-bar-fill { height: 100%; background: #ff0000; width: 0%; transition: width 0.1s linear; }
-        .load-bar-text { font-size: 13px; font-weight: bold; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
-
-        /* Shorts Container Setup for Single Viewing */
-        .shorts-container { display: flex; flex-direction: column; align-items: center; gap: 15px; padding-bottom: 20px; }
-        .short-card { background: #000; border-radius: 12px; width: 100%; max-width: 360px; height: 640px; position: relative; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; }
-        .short-card video { width: 100%; height: 100%; object-fit: contain; background: #000; max-height: none; border-radius: 0; }
-        .short-overlay { position: absolute; bottom: 0; left: 0; right: 0; padding: 20px; background: linear-gradient(transparent, rgba(0,0,0,0.8)); color: white; display: flex; flex-direction: column; gap: 8px; z-index: 2; pointer-events: none; }
-        .short-overlay .channel-name { color: #ddd; font-weight: bold; pointer-events: auto; }
-        .short-overlay .video-title { font-size: 16px; margin: 0; }
-
-        .comments-section { margin-top: 20px; background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        input, button, textarea, select { padding: 10px; margin: 5px 0; box-sizing: border-box; width: 100%; }
-        button { background: #ff0000; color: white; border: none; font-weight: bold; cursor: pointer; border-radius: 4px; width: auto; padding: 10px 20px; }
-        button:hover { background: #cc0000; }
-        .form-group { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 15px; }
-        
-        .progress-bar-container { width: 100%; background: #e0e0e0; border-radius: 6px; height: 22px; margin-top: 10px; overflow: hidden; display: none; position: relative; }
-        .progress-bar-fill { height: 100%; background: #ff0000; width: 0%; transition: width 0.1s ease; }
-        .progress-bar-text { position: absolute; width: 100%; top: 0; left: 0; text-align: center; font-size: 12px; font-weight: bold; line-height: 22px; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
-
-        .channel-header { padding: 30px; border-radius: 8px; text-align: center; margin-bottom: 25px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); transition: background 0.3s, color 0.3s; display: flex; flex-direction: column; align-items: center; gap: 10px; }
-        .channel-header .pfp-avatar { width: 90px; height: 90px; font-size: 36px; margin: 0 auto; }
-        .loader { text-align: center; padding: 40px; font-weight: bold; color: #666; font-size: 18px; }
-        #authStatus { font-weight: bold; color: #0066cc; }
-
-        .vibe-banner { background: linear-gradient(135deg, #ff4e50, #f9d423); color: white; padding: 12px 20px; border-radius: 8px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
-        .vibe-banner span { font-weight: bold; font-size: 14px; text-shadow: 0 1px 2px rgba(0,0,0,0.2); }
-        .vibe-btn { background: rgba(255, 255, 255, 0.3); border: 1px solid white; color: white; padding: 6px 14px; border-radius: 20px; cursor: pointer; font-size: 13px; font-weight: bold; transition: background 0.2s; }
-        .vibe-btn:hover { background: rgba(255, 255, 255, 0.5); }
-        
-        .upload-tabs { display: flex; gap: 10px; margin-bottom: 15px; }
-        .upload-tab-btn { background: #ddd; color: #333; flex: 1; }
-        .upload-tab-btn.active-tab { background: #ff0000; color: #fff; }
-
-        .color-picker-row { display: flex; align-items: center; justify-content: space-between; margin: 8px 0; }
-        .color-picker-row label { font-size: 14px; font-weight: bold; }
-        .color-picker-row input[type="color"] { width: 60px; height: 35px; border: none; cursor: pointer; background: none; }
-        
-        .credit-badge { background: #222; color: #ffd700; padding: 4px 10px; border-radius: 12px; font-size: 13px; font-weight: bold; display: inline-flex; align-items: center; gap: 4px; }
-        .credit-game-card { background: linear-gradient(135deg,#fff7df,#ffe8a3); border: 1px solid #ffd166; padding: 14px; border-radius: 10px; margin: 15px 0; }
-        .credit-game-arena { position:relative; height:300px; background:radial-gradient(circle at center,#26354a,#111827); border-radius:14px; overflow:hidden; margin:15px 0; cursor:crosshair; user-select:none; }
-        .credit-game-target { position:absolute; width:58px; height:58px; border-radius:50%; border:5px solid #fff; background:#ff4d4d; box-shadow:0 0 0 5px rgba(255,77,77,.25),0 0 25px rgba(255,180,0,.8); transform:translate(-50%,-50%); transition:left .12s,top .12s,transform .08s; }
-        .credit-game-target.hit { transform:translate(-50%,-50%) scale(.75); }
-        .credit-game-hud { display:flex; justify-content:space-between; gap:10px; font-weight:bold; }
-
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); display: flex; justify-content: center; align-items: center; z-index: 100; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+        .modal-overlay.open { opacity: 1; pointer-events: auto; }
+        .modal-content { background: white; padding: 30px; border-radius: 8px; max-width: 500px; width: 90%; box-shadow: 0 5px 15px rgba(0,0,0,0.3); text-align: left; position: relative; }
+        .close-modal-btn { margin-top: 20px; background-color: #6c757d; color: white; border: none; padding: 8px 16px; font-weight: bold; border-radius: 4px; cursor: pointer; float: right; }
     </style>
 </head>
 <body>
 
-    <header>
-        <h1 onclick="switchView('homeView')">📺FREEVID</h1>
-        
-        <div class="search-container">
-            <input type="text" id="searchInput" placeholder="Search videos or channels..." onkeypress="handleSearchKey(event)">
-            <button onclick="triggerSearch()">🔍</button>
-        </div>
+    <h1>@DemoReviewTv And @The Red Guy's New Shiny Website!!</h1>
 
-        <div style="display: flex; align-items: center; gap: 10px;">
-            <button class="notif-badge-btn" onclick="toggleNotificationsModal()" title="Notifications">
-                🔔 <span id="notifCount" class="notif-count">0</span>
-            </button>
-
-            <span id="authStatusContainer" style="font-size: 14px;">
-                <span id="authStatus" style="font-weight: bold; color: #0066cc;">Not Logged In</span>
-            </span>
-            <button onclick="switchView('homeView')">Home</button>
-            <button onclick="switchView('shortsView')">Shorts</button>
-            <button onclick="switchView('authView')" id="authNavBtn">Account</button>
-            <button onclick="switchView('uploadView')" id="uploadNavBtn" style="display:none;">Upload</button>
-        </div>
-    </header>
-
-    <div class="container">
-
-        <div id="homeView" class="view active">
-            <div class="vibe-banner">
-                <span>🎵 Set the Vibe (Chill Background Beats)</span>
-                <div>
-                    <button class="vibe-btn" onclick="toggleVibeMusic()" id="vibeToggleBtn">Play Vibe</button>
-                </div>
-            </div>
-            <audio id="vibeAudio" loop src="https://stream.zeno.fm/f3wvbbqmdg8uv"></audio>
-
-            <h2>Recommended Videos</h2>
-            <div id="videoGrid" class="video-grid"></div>
-        </div>
-
-        <div id="searchView" class="view">
-            <button onclick="switchView('homeView')">← Back to Feed</button>
-            <h2 id="searchQueryTitle" style="margin-top: 15px;">Search Results</h2>
-            
-            <div class="search-results-section">
-                <h3>Channels</h3>
-                <div id="searchChannelResults"></div>
-            </div>
-
-            <div class="search-results-section">
-                <h3>Videos</h3>
-                <div id="searchVideoGrid" class="video-grid"></div>
-            </div>
-        </div>
-
-        <div id="shortsView" class="view">
-            <h2>Shorts</h2>
-            <div id="shortsContainer" class="shorts-container"></div>
-            <div style="display: flex; justify-content: center; gap: 15px; margin-top: 15px;">
-                <button id="shortPrevBtn" onclick="navigateShort(-1)" disabled>Previous Short</button>
-                <button id="shortNextBtn" onclick="navigateShort(1)">Next Short</button>
-            </div>
-        </div>
-
-        <div id="channelView" class="view" style="padding: 20px; border-radius: 8px;">
-            <button onclick="switchView('homeView')">← Back to Feed</button>
-            <div class="channel-header" id="channelHeaderBox" style="margin-top: 15px;">
-                <div id="channelPageAvatar"></div>
-                <h2 id="channelPageTitle" style="margin: 5px 0 0 0;"></h2>
-                <div id="channelFollowActionContainer"></div>
-            </div>
-            <h3 id="channelVideoSectionTitle">Uploaded Videos</h3>
-            <div id="channelVideoGrid" class="video-grid"></div>
-        </div>
-
-        <div id="authView" class="view">
-            <div class="form-group" id="loginBox">
-                <h2>Account Login / Sign Up</h2>
-                <p style="font-size: 13px; color: #666;">Note: Each email can only create one channel profile.</p>
-                <input type="email" id="authEmail" placeholder="Email">
-                <input type="password" id="authPassword" placeholder="Password">
-                <button onclick="handleSignUp()">Register New Account</button>
-                <button onclick="handleLogin()" style="background: #0066cc;">Log In</button>
-            </div>
-
-            <div class="form-group" id="channelSetupBox" style="display:none;">
-                <h2>Your Channel Customization & Credits</h2>
-                <p>Logged in Channel: <strong id="currentUserChannelName"></strong></p>
-                <p>Upload Credits Balance: <span id="userCreditsDisplay" class="credit-badge">🪙 0 Credits</span></p>
-                
-                <div class="credit-game-card">
-                    <strong>Need more upload credits?</strong>
-                    <p style="font-size: 13px; margin: 5px 0 10px 0;">Play Coin Rush. Hit the target as it moves and build a combo to earn credits.</p>
-                    <button onclick="openCreditGame()" style="background:#ff9800; color:#000;">🎯 Play Coin Rush</button>
-                </div>
-                
-                <label>Channel Name:</label>
-                <input type="text" id="desiredChannelName" placeholder="Enter your channel name">
-
-                <label>Change Profile Picture:</label>
-                <input type="file" id="pfpFile" accept="image/*"><br>
-
-                <h3 style="margin-top: 20px;">Page Theme Customizer</h3>
-                <div class="color-picker-row">
-                    <label>Page Background Color:</label>
-                    <input type="color" id="themeBgColor" value="#f9f9f9">
-                </div>
-                <div class="color-picker-row">
-                    <label>Header / Banner Box Color:</label>
-                    <input type="color" id="themeHeaderColor" value="#ffffff">
-                </div>
-                <div class="color-picker-row">
-                    <label>Main Text Color:</label>
-                    <input type="color" id="themeTextColor" value="#111111">
-                </div>
-                <div class="color-picker-row">
-                    <label>Accent / Title Color:</label>
-                    <input type="color" id="themeAccentColor" value="#ff0000">
-                </div>
-
-                <button onclick="saveChannelProfile()" style="margin-top: 15px;">Save Channel & Theme</button>
-            </div>
-            <p id="authStatusText" style="font-weight: bold;"></p>
-        </div>
-
-        <div id="uploadView" class="view">
-            <div class="form-group">
-                <h2>Publish a Video</h2>
-                <p>Posting as Channel: <strong id="uploaderDisplayHandle">Checking channel...</strong> | Balance: <span id="uploadViewCreditsDisplay" class="credit-badge">🪙 0 Credits</span></p>
-                
-                <div style="background: #e8f4fd; border: 1px solid #b8daff; padding: 10px; border-radius: 6px; margin-bottom: 15px; font-size: 13px;">
-                    <strong>Upload Pricing Rules:</strong> 5 mins = 10 credits | 1 min = 2 credits | 30 secs = 1 credit | Below 30 secs = 1 credit.
-                </div>
-
-                <div class="upload-tabs">
-                    <button class="upload-tab-btn active-tab" id="fileTabBtn" onclick="switchUploadMode('file')">Upload File</button>
-                    <button class="upload-tab-btn" id="linkTabBtn" onclick="switchUploadMode('link')">Import via .mp4 Link</button>
-                </div>
-
-                <input type="text" id="videoName" placeholder="Video Title">
-
-                <div id="fileUploadSection">
-                    <label>Select Video File:</label>
-                    <input type="file" id="videoFile" accept="video/*"><div id="fileSizeInfo" style="font-size:13px;color:#666;margin:6px 0 10px;">Maximum file size: 100 MB • 5 MB chunks</div><br>
-                    <button onclick="uploadVideoFile()" id="publishFileBtn">Publish Video File</button>
-                </div>
-
-                <div id="linkUploadSection" style="display:none;">
-                    <label>Direct .mp4 Video URL Link:</label>
-                    <input type="url" id="videoUrlInput" placeholder="https://example.com/video.mp4"><br>
-                    <button onclick="importVideoLink()" id="publishLinkBtn" style="background: #0066cc;">Import & Publish Link</button>
-                </div>
-
-                <p id="status" style="font-weight: bold; margin-top: 10px;"></p>
-                
-                <div id="progressBarContainer" class="progress-bar-container">
-                    <div id="progressBarFill" class="progress-bar-fill"></div>
-                    <div id="progressBarText" class="progress-bar-text">0%</div>
-                </div>
-            </div>
-        </div>
-
-        <div id="watchView" class="view">
-            <button onclick="switchView('homeView')">← Back to Feed</button>
-            <h2 id="watchTitle"></h2>
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; flex-wrap: wrap; gap: 10px;">
-                <div style="display: flex; align-items: center; gap: 12px;">
-                    <div id="watchPfpContainer"></div>
-                    <div>
-                        <p id="watchChannel" class="channel-name" style="margin: 0; font-size: 16px; font-weight: bold;"></p>
-                    </div>
-                </div>
-                <div id="watchFollowContainer"></div>
-            </div>
-
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
-                <div style="font-size: 13px; color: #666; font-weight: bold;" id="watchViewCountDisplay">Views: 0</div>
-                <div class="action-row" style="margin: 0;">
-                    <button class="action-btn" id="likeBtn" onclick="toggleLikeVideo()">👍 <span id="likeCountDisplay">0</span></button>
-                    <button class="action-btn" onclick="shareCurrentVideo()">🔗 Share</button>
-                    <button class="action-btn" id="downloadVideoBtn" onclick="downloadCurrentVideo()">⬇ Download</button>
-                </div>
-            </div>
-            
-            <div class="video-player-wrapper" id="playerWrapper">
-                <div id="videoLoadingOverlay" class="video-loading-overlay">
-                    <div id="videoLoadingText" class="load-bar-text">Loading video chunks (0/0)</div>
-                    <div class="load-bar-track">
-                        <div id="videoLoadingFill" class="load-bar-fill"></div>
-                    </div>
-                </div>
-                
-                <video id="videoPlayer" class="custom-video" playsinline></video>
-                
-                <div class="custom-controls-bar" id="customControls">
-                    <div class="control-timeline-track" id="timelineTrack">
-                        <div class="control-timeline-fill" id="timelineFill"></div>
-                    </div>
-                    <div class="control-row">
-                        <div class="control-row-left">
-                            <button class="ctrl-btn" id="playPauseBtn" onclick="togglePlayPause()">▶ Play</button>
-                            <button class="ctrl-btn" id="muteBtn" onclick="toggleMute()">🔊</button>
-                            <span class="time-display" id="timeDisplay">0:00 / 0:00</span>
-                        </div>
-                        <div class="control-row-right">
-                            <button class="ctrl-btn" onclick="toggleFullscreen()">⛶ Fullscreen</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="comments-section">
-                <h3>Comments</h3>
-                <div id="commentInputArea"></div>
-                <div id="commentsList" style="margin-top: 15px;"></div>
-            </div>
-        </div>
-
+    <div class="search-container">
+        <input type="text" id="search" placeholder="Search This Tiny Server!" disabled oninput="filterVideos()">
+        <div id="results" class="results"></div>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getDatabase, ref, set, get, child, push, onChildAdded, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+    <div class="top-nav">
+        <a href="https://forms.gle/FEpwiv7j2uGquxbY9" target="_blank" class="forms-btn">Upload Video!</a>
+        <a href="https://forms.gle/fiyaRZ3CMZSGi5JQ7" target="_blank" class="forms-btn">Change Your Username.</a>
+        <button class="about-btn" onclick="openAboutModal()">About This Site</button>
+    </div>
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyCZwwg8vlYo3LV_k4I9BydIcbKkU_xO9a8",
-            authDomain: "file-share-a5d42.firebaseapp.com",
-            databaseURL: "https://file-share-a5d42-default-rtdb.europe-west1.firebasedatabase.app",
-            projectId: "file-share-a5d42",
-            storageBucket: "file-share-a5d42.firebasestorage.app",
-            messagingSenderId: "777628771847",
-            appId: "1:777628771847:web:541e1ba1b4123fd273aca2",
-            measurementId: "G-6JYDD5G7S4"
-        };
+    <div id="videoWrapper" class="video-wrapper">
+        <video id="player" controls autoplay controlsList="nodownload" disablePictureInPicture oncontextmenu="return false;"></video>
+    </div>
+    
+    <div class="info-container">
+        <p class="status-msg" id="status">Syncing directly with GitHub storage...</p>
+    </div>
 
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const database = getDatabase(app);
-        
-        const CHUNK_SIZE = 5 * 1024 * 1024;
+    <div class="actions-wrapper">
+        <a id="downloadBtn" href="#" download class="download-btn">Download Video</a>
+        <button id="loopBtn" class="loop-btn" onclick="toggleLoop()"><span id="loopText">Looping: OFF</span></button>
+        <button id="resetBtn" class="reset-btn" onclick="resetPlayer()">Go Back</button>
+    </div>
 
-        let loggedInUser = null;
-        let userChannelKey = null;
-        let activeVideoId = null;
-        let cachedShorts = [];
-        let currentShortIndex = 0;
+    <div id="creatorSection" class="creator-section">
+        <div class="section-header-container">
+            <h2 id="creatorHeader">Discover Videos</h2>
+            <button id="rerollBtn" class="reroll-btn" onclick="showRandomVideos()">Reroll</button>
+        </div>
+        <div id="thumbnailGrid" class="thumbnail-grid"></div>
+    </div>
 
-        const videoPlayer = document.getElementById('videoPlayer');
-        const playPauseBtn = document.getElementById('playPauseBtn');
-        const muteBtn = document.getElementById('muteBtn');
-        const timelineTrack = document.getElementById('timelineTrack');
-        const timelineFill = document.getElementById('timelineFill');
-        const timeDisplay = document.getElementById('timeDisplay');
-        const playerWrapper = document.getElementById('playerWrapper');
+    <div id="aboutModal" class="modal-overlay" onclick="closeAboutModal(event)">
+        <div class="modal-content">
+            <h2>About FREEVID!!</h2>
+            <p>Welcome to Freevid!</p>
+            <button class="close-modal-btn" onclick="document.getElementById('aboutModal').classList.remove('open')">Close</button>
+        </div>
+    </div>
 
-        window.addEventListener('DOMContentLoaded', () => {
-            loadHomeFeed();
-            const fileInput = document.getElementById('videoFile');
-            if(fileInput) fileInput.addEventListener('change', () => {
-                const file = fileInput.files[0];
-                const info = document.getElementById('fileSizeInfo');
-                if(!file) { info.innerText = 'Maximum file size: 100 MB • 5 MB chunks'; return; }
-                const mb = file.size / 1024 / 1024;
-                const chunks = Math.ceil(file.size / CHUNK_SIZE);
-                info.innerText = mb > 100 ? `Too large: ${mb.toFixed(1)} MB • Maximum is 100 MB` : `${mb.toFixed(1)} MB • ${chunks} chunks • 5 MB per chunk`;
-            });
+    <script>
+        // 🌐 Connects straight to your public video repo folder via GitHub's API!
+        const GITHUB_API_URL = "https://api.github.com/repos/demoreviewtv-png/FREEVID-Vidstorage/contents/videos";
+        const VIDEO_FOLDER = "https://raw.githubusercontent.com/demoreviewtv-png/FREEVID-Vidstorage/main/videos/";
+        const THUMBNAIL_FOLDER = "https://raw.githubusercontent.com/demoreviewtv-png/FREEVID-Vidstorage/main/videos/thumbnails/";
 
-            videoPlayer.addEventListener('timeupdate', () => {
-                if (!videoPlayer.duration) return;
-                const pct = (videoPlayer.currentTime / videoPlayer.duration) * 100;
-                timelineFill.style.width = pct + '%';
-                timeDisplay.innerText = `${formatTime(videoPlayer.currentTime)} / ${formatTime(videoPlayer.duration)}`;
-            });
+        let serverVideos = [];
+        let currentlyPlayingTitle = "";
 
-            videoPlayer.addEventListener('play', () => { playPauseBtn.innerText = "⏸ Pause"; });
-            videoPlayer.addEventListener('pause', () => { playPauseBtn.innerText = "▶ Play"; });
-
-            timelineTrack.addEventListener('click', (e) => {
-                const rect = timelineTrack.getBoundingClientRect();
-                const pos = (e.clientX - rect.left) / rect.width;
-                if (videoPlayer.duration) {
-                    videoPlayer.currentTime = pos * videoPlayer.duration;
-                }
-            });
-        });
-
-        function formatTime(seconds) {
-            const m = Math.floor(seconds / 60);
-            const s = Math.floor(seconds % 60);
-            return `${m}:${s < 10 ? '0' : ''}${s}`;
+        function formatDuration(seconds) {
+            if (isNaN(seconds) || seconds === Infinity || seconds <= 0) return "";
+            const hrs = Math.floor(seconds / 3600);
+            const mins = Math.floor((seconds % 3600) / 60);
+            const secs = Math.floor(seconds % 60);
+            return hrs > 0 ? `${hrs}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}` : `${mins}:${secs.toString().padStart(2, '0')}`;
         }
 
-        window.togglePlayPause = function() {
-            if (videoPlayer.paused) {
-                videoPlayer.play();
-            } else {
-                videoPlayer.pause();
+        function getCleanName(filename) {
+            return filename.replace(/\.[^/.]+$/, "").replace("[Downloadable]", "").replace("[AutoLoop]", "").replace(/\b\d{1,2}:\d{2}(?::\d{2})?\b/g, "").replace(/\[.*?\]/g, "").replace(/\s+/g, " ").trim();
+        }
+
+        function parseVideoMeta(filename) {
+            const cleanName = getCleanName(filename);
+            if (cleanName.includes(" - ")) {
+                const parts = cleanName.split(" - ");
+                return { title: parts[0].trim(), creator: parts[1].trim() };
             }
+            return { title: cleanName, creator: "Unknown Creator" };
         }
 
-        window.toggleMute = function() {
-            videoPlayer.muted = !videoPlayer.muted;
-            muteBtn.innerText = videoPlayer.muted ? "🔇" : "🔊";
-        }
-
-        window.toggleFullscreen = function() {
-            if (!document.fullscreenElement) {
-                playerWrapper.requestFullscreen().catch(err => {
-                    alert("Error attempting to enable fullscreen: " + err.message);
-                });
-            } else {
-                document.exitFullscreen();
-            }
-        }
-
-        window.toggleVibeMusic = function() {
-            const audio = document.getElementById('vibeAudio');
-            const btn = document.getElementById('vibeToggleBtn');
-            if (audio.paused) {
-                audio.play().then(() => {
-                    btn.innerText = "Pause Vibe";
-                }).catch(e => alert("Click to enable vibe audio playback."));
-            } else {
-                audio.pause();
-                btn.innerText = "Play Vibe";
-            }
-        }
-
-        // --- Coin Rush Credit Minigame ---
-        window.openCreditGame = function() {
-            if(!userChannelKey) { alert("Please log in and set up your channel first."); return; }
-            const existing = document.getElementById('creditGameModal');
-            if(existing) existing.remove();
-            const modal = document.createElement('div');
-            modal.id = 'creditGameModal';
-            modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.78);display:flex;align-items:center;justify-content:center;z-index:3000;padding:15px;';
-            modal.innerHTML = `
-                <div style="background:#fff;padding:22px;border-radius:14px;width:min(620px,95vw);box-shadow:0 12px 40px rgba(0,0,0,.35);">
-                    <h2 style="margin:0 0 5px;">🎯 Coin Rush</h2>
-                    <p style="margin:0 0 12px;color:#666;">Hit the moving target before time runs out. Faster hits build your combo.</p>
-                    <div class="credit-game-hud"><span>Time: <b id="gameTime">20</b>s</span><span>Score: <b id="gameScore">0</b></span><span>Combo: <b id="gameCombo">0</b></span></div>
-                    <div id="creditGameArena" class="credit-game-arena"><button id="creditGameTarget" class="credit-game-target" aria-label="Hit target"></button></div>
-                    <div id="gameResult" style="text-align:center;font-weight:bold;min-height:24px;"></div>
-                    <button id="gameStartBtn" style="width:100%;background:#ff9800;color:#000;">Start Round</button>
-                    <button onclick="document.getElementById('creditGameModal').remove();" style="width:100%;background:#666;margin-top:6px;">Close</button>
-                </div>`;
-            document.body.appendChild(modal);
-            const arena=document.getElementById('creditGameArena');
-            const target=document.getElementById('creditGameTarget');
-            const startBtn=document.getElementById('gameStartBtn');
-            let score=0,combo=0,time=20,timer=null,running=false;
-            const move=()=>{ const r=arena.getBoundingClientRect(); target.style.left=(25+Math.random()*50)+'%'; target.style.top=(22+Math.random()*56)+'%'; };
-            const end=async()=>{ running=false; clearInterval(timer); target.style.display='none'; startBtn.disabled=false; startBtn.innerText='Play Again'; const credits=Math.min(15,Math.floor(score/3)); document.getElementById('gameResult').innerText=credits?`Round over! You earned ${credits} credits.`:'Round over! Hit more targets next time.'; if(credits) await addCreditsToUser(credits); };
-            target.onclick=()=>{ if(!running)return; score++; combo++; document.getElementById('gameScore').innerText=score; document.getElementById('gameCombo').innerText=combo; target.classList.add('hit'); setTimeout(()=>target.classList.remove('hit'),70); move(); };
-            startBtn.onclick=()=>{ if(running)return; score=0;combo=0;time=20;running=true;startBtn.disabled=true;startBtn.innerText='Round Running...';target.style.display='block';document.getElementById('gameResult').innerText='';document.getElementById('gameScore').innerText='0';document.getElementById('gameCombo').innerText='0';document.getElementById('gameTime').innerText='20';move(); timer=setInterval(()=>{time--;document.getElementById('gameTime').innerText=time;if(time<=0)end();},1000); };
-            target.style.display='none';
-        };
-
-        async function addCreditsToUser(amount) {
-            if(!userChannelKey) return;
-            const creditsRef = ref(database, `channels/${userChannelKey}/credits`);
-            const snap = await get(creditsRef);
-            let currentCredits = snap.exists() ? snap.val() : 0;
-            currentCredits += amount;
-            await set(creditsRef, currentCredits);
-            updateCreditsUI(currentCredits);
-        }
-
-        async function getUserCredits() {
-            if(!userChannelKey) return 0;
-            const snap = await get(child(ref(database), `channels/${userChannelKey}/credits`));
-            return snap.exists() ? snap.val() : 0;
-        }
-
-        async function updateCreditsUI(balance) {
-            document.getElementById('userCreditsDisplay').innerText = `🪙 ${balance} Credits`;
-            document.getElementById('uploadViewCreditsDisplay').innerText = `🪙 ${balance} Credits`;
-        }
-
-        function calculateRequiredCredits(durationInSeconds) {
-            if (durationInSeconds <= 30) return 1;
-            const minutes = durationInSeconds / 60;
-            if (minutes <= 1) return 2;
-            return Math.max(1, Math.ceil(minutes * 2));
-        }
-
-        window.handleSearchKey = function(e) {
-            if (e.key === 'Enter') {
-                triggerSearch();
-            }
-        }
-
-        window.triggerSearch = async function() {
-            const input = document.getElementById('searchInput');
-            const query = input.value.trim().toLowerCase();
-            if(!query) {
-                switchView('homeView');
-                return;
-            }
-
-            // Switch immediately so the search page cannot appear to be stuck on Home.
-            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-            document.getElementById('searchView').classList.add('active');
-            document.getElementById('searchQueryTitle').innerText = `Search Results for "${escapeHtml(query)}"`;
-
-            const chanContainer = document.getElementById('searchChannelResults');
-            const vidGrid = document.getElementById('searchVideoGrid');
-            chanContainer.innerHTML = '<div class="loader">Searching channels...</div>';
-            vidGrid.innerHTML = '<div class="loader">Searching videos...</div>';
-
+        async function fetchVideoList() {
+            const status = document.getElementById('status');
+            const searchInput = document.getElementById('search');
             try {
-                const [channelsSnap, videosSnap] = await Promise.all([
-                    get(child(ref(database), 'channels')),
-                    get(child(ref(database), 'video-details'))
-                ]);
+                const response = await fetch(GITHUB_API_URL);
+                const items = await response.json();
+                
+                serverVideos = items
+                    .filter(item => item.type === 'file' && /\.(mp4|webm|mkv|avi)$/i.test(item.name))
+                    .map(item => item.name);
 
-            chanContainer.innerHTML = "";
-            vidGrid.innerHTML = "";
-
-            let foundChannels = 0;
-            if(channelsSnap.exists()) {
-                channelsSnap.forEach(cSnap => {
-                    const cKey = cSnap.key;
-                    const cVal = cSnap.val();
-                    const cName = cVal.name || "";
-                    if(cName.toLowerCase().includes(query)) {
-                        foundChannels++;
-                        const pfpHtml = renderPfpElement(cName, cVal.pfp || "", 50);
-                        const row = document.createElement('div');
-                        row.className = 'channel-row-card';
-                        row.innerHTML = `
-                            <div class="channel-row-left" onclick="openChannelPage('${cKey}', '${escapeHtml(cName)}')">
-                                ${pfpHtml}
-                                <div>
-                                    <div style="font-weight: bold; font-size: 16px;">${escapeHtml(cName)}</div>
-                                    <div style="color: #666; font-size: 12px;">Freevid Creator Channel</div>
-                                </div>
-                            </div>
-                            <div id="search_follow_${cKey}"></div>
-                        `;
-                        chanContainer.appendChild(row);
-                        renderFollowButton(cKey, cName, `search_follow_${cKey}`);
-                    }
-                });
-            }
-            if(foundChannels === 0) {
-                chanContainer.innerHTML = "<p>No matching channels found.</p>";
-            }
-
-            let foundVideos = 0;
-            if(videosSnap.exists()) {
-                videosSnap.forEach(vSnap => {
-                    const vKey = vSnap.key;
-                    const details = vSnap.val();
-                    const vName = details["Video-name"] || "";
-                    const vCreator = details["Video-Creator"] || "";
-                    const creatorKey = details["CreatorKey"] || "";
-                    
-                    if(vName.toLowerCase().includes(query) || vCreator.toLowerCase().includes(query)) {
-                        foundVideos++;
-                        const card = document.createElement('div');
-                        card.className = 'video-card';
-                        card.onclick = () => watchVideo(vKey);
-
-                        let ownerActionsHtml = "";
-                        if(loggedInUser && userChannelKey === creatorKey) {
-                            ownerActionsHtml = `
-                                <div class="owner-actions-overlay">
-                                    <button class="owner-action-badge" onclick="event.stopPropagation(); renameVideo('${vKey}', '${escapeHtml(vName)}')">Rename</button>
-                                    <button class="owner-action-badge" onclick="event.stopPropagation(); deleteVideo('${vKey}')">Delete</button>
-                                </div>
-                            `;
-                        }
-
-                        card.innerHTML = `
-                            ${ownerActionsHtml}
-                            <img src="${details["Video-Thumbnail"] || ''}" loading="eager">
-                            <div class="video-info">
-                                <div>
-                                    <div class="video-title">${escapeHtml(vName)}</div>
-                                    <div class="channel-name">${escapeHtml(vCreator)}</div>
-                                </div>
-                            </div>
-                        `;
-                        vidGrid.appendChild(card);
-                    }
-                });
-            }
-            if(foundVideos === 0) {
-                vidGrid.innerHTML = "<p>No matching videos found.</p>";
-            }
+                if (serverVideos.length > 0) {
+                    status.textContent = `Successfully synced! (${serverVideos.length} videos found)`;
+                    searchInput.disabled = false;
+                    showRandomVideos();
+                } else {
+                    status.textContent = "Connected to storage, but no videos found inside /videos.";
+                }
             } catch (err) {
-                console.error('Search failed:', err);
-                chanContainer.innerHTML = '<p>Could not load channel results.</p>';
-                vidGrid.innerHTML = `<p style="color:#b00020;">Could not load video results: ${escapeHtml(err.message || 'Unknown error')}</p>`;
+                status.textContent = "Error: Couldn't read GitHub storage. Make sure the FREEVID-Vidstorage repo is PUBLIC!";
             }
         }
 
-        async function renderFollowButton(targetChannelKey, targetChannelName, containerElementId) {
-            const container = document.getElementById(containerElementId);
-            if(!container) return;
+        function selectVideo(video) {
+            const meta = parseVideoMeta(video);
+            const videoSrc = VIDEO_FOLDER + encodeURIComponent(video);
+            const dlBtn = document.getElementById('downloadBtn');
+            const loopBtn = document.getElementById('loopBtn');
+            const resetBtn = document.getElementById('resetBtn');
+            const player = document.getElementById('player');
 
-            if(!loggedInUser || !userChannelKey || userChannelKey === targetChannelKey) {
-                container.innerHTML = "";
-                return;
-            }
-
-            const subSnap = await get(child(ref(database), `subscribers/${targetChannelKey}/${userChannelKey}`));
-            const isFollowing = subSnap.exists();
-
-            const btn = document.createElement('button');
-            btn.className = `follow-btn ${isFollowing ? 'following' : ''}`;
-            btn.innerText = isFollowing ? 'Following ✓' : `Subscribe @${targetChannelName}`;
-            btn.onclick = async (e) => {
-                e.stopPropagation();
-                if(isFollowing) {
-                    await set(ref(database, `subscribers/${targetChannelKey}/${userChannelKey}`), null);
-                } else {
-                    const chanSnap = await get(child(ref(database), `channels/${userChannelKey}`));
-                    const followerName = (chanSnap.exists() && chanSnap.val().name) ? chanSnap.val().name : "Creator";
-                    await set(ref(database, `subscribers/${targetChannelKey}/${userChannelKey}`), {
-                        channelName: followerName,
-                        followedAt: Date.now()
-                    });
-                }
-                renderFollowButton(targetChannelKey, targetChannelName, containerElementId);
-            };
-            container.innerHTML = "";
-            container.appendChild(btn);
-        }
-
-        window.shareCurrentVideo = function() {
-            if(!activeVideoId) return;
-            const currentUrl = window.location.href.split('#')[0] + "#watch=" + activeVideoId;
-            if (navigator.clipboard) {
-                navigator.clipboard.writeText(currentUrl).then(() => {
-                    alert("Video link copied to clipboard!");
-                }).catch(() => {
-                    prompt("Copy video link:", currentUrl);
-                });
-            } else {
-                prompt("Copy video link:", currentUrl);
-            }
-        }
-
-        async function updateNotificationsBadge() {
-            if(!userChannelKey) {
-                document.getElementById('notifCount').style.display = 'none';
-                return;
-            }
-            const notifSnap = await get(child(ref(database), `notifications/${userChannelKey}`));
-            if(notifSnap.exists()) {
-                let unreadCount = 0;
-                notifSnap.forEach(n => {
-                    if(!n.val().read) unreadCount++;
-                });
-                const badge = document.getElementById('notifCount');
-                if(unreadCount > 0) {
-                    badge.innerText = unreadCount;
-                    badge.style.display = 'block';
-                } else {
-                    badge.style.display = 'none';
-                }
-            } else {
-                document.getElementById('notifCount').style.display = 'none';
-            }
-        }
-
-        window.toggleNotificationsModal = async function() {
-            if(!loggedInUser || !userChannelKey) {
-                alert("Please log in and create a channel to view notifications.");
-                return;
-            }
-            const notifSnap = await get(child(ref(database), `notifications/${userChannelKey}`));
-            let htmlContent = "<h3>Notifications</h3>";
+            currentlyPlayingTitle = meta.title;
+            player.src = videoSrc;
+            document.getElementById('videoWrapper').style.display = "flex";
+            document.getElementById('search').value = meta.title;
+            document.getElementById('status').textContent = "Now playing: " + meta.title;
             
-            if(!notifSnap.exists()) {
-                htmlContent += "<p>No new upload notifications.</p>";
-            } else {
-                let listHtml = "<div style='display:flex; flex-direction:column; gap:10px; max-height:300px; overflow-y:auto;'>";
-                notifSnap.forEach(n => {
-                    const data = n.val();
-                    listHtml += `
-                        <div style="background:#f1f1f1; padding:10px; border-radius:6px; cursor:pointer;" onclick="watchVideo('${data.videoId}')">
-                            <strong>${escapeHtml(data.channelName)}</strong> uploaded a new video: <em>${escapeHtml(data.videoTitle)}</em>
-                        </div>
-                    `;
-                    set(ref(database, `notifications/${userChannelKey}/${n.key}/read`), true);
-                });
-                listHtml += "</div>";
-                htmlContent += listHtml;
-            }
+            player.loop = video.includes("[AutoLoop]");
+            loopBtn.classList.toggle('active', player.loop);
+            document.getElementById('loopText').textContent = player.loop ? "Looping: ON" : "Looping: OFF";
+            loopBtn.style.display = "inline-flex";
 
-            const existingModal = document.getElementById('notifModalBox');
-            if(existingModal) existingModal.remove();
-
-            const modal = document.createElement('div');
-            modal.id = 'notifModalBox';
-            modal.style.cssText = "position:fixed; top:70px; right:30px; background:#fff; border:1px solid #ccc; padding:20px; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.15); z-index:1000; width:320px;";
-            modal.innerHTML = htmlContent + `<button style="margin-top:15px; width:100%;" onclick="document.getElementById('notifModalBox').remove(); updateNotificationsBadge();">Close</button>`;
-            document.body.appendChild(modal);
-        }
-
-        window.switchUploadMode = function(mode) {
-            const fileBtn = document.getElementById('fileTabBtn');
-            const linkBtn = document.getElementById('linkTabBtn');
-            const fileSec = document.getElementById('fileUploadSection');
-            const linkSec = document.getElementById('linkUploadSection');
-
-            if (mode === 'file') {
-                fileBtn.classList.add('active-tab');
-                linkBtn.classList.remove('active-tab');
-                fileSec.style.display = 'block';
-                linkSec.style.display = 'none';
-            } else {
-                linkBtn.classList.add('active-tab');
-                fileBtn.classList.remove('active-tab');
-                linkSec.style.display = 'block';
-                fileSec.style.display = 'none';
-            }
-        }
-
-        window.switchView = async function(viewId) {
-            if (document.getElementById('watchView').classList.contains('active') && viewId !== 'watchView') {
-                videoPlayer.pause();
-                videoPlayer.currentTime = 0;
-                videoPlayer.src = "";
-            }
-
-            if (viewId !== 'channelView') {
-                const chanViewEl = document.getElementById('channelView');
-                const chanHeaderEl = document.getElementById('channelHeaderBox');
-                const chanTitleEl = document.getElementById('channelPageTitle');
-                const chanVidTitleEl = document.getElementById('channelVideoSectionTitle');
-                
-                chanViewEl.style.backgroundColor = "";
-                chanViewEl.style.color = "";
-                chanHeaderEl.style.backgroundColor = "";
-                chanHeaderEl.style.color = "";
-                chanTitleEl.style.color = "";
-                if(chanVidTitleEl) chanVidTitleEl.style.color = "";
-            }
-
-            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-            document.getElementById(viewId).classList.add('active');
+            if (video.includes("[Downloadable]")) {
+                dlBtn.href = videoSrc;
+                dlBtn.setAttribute("download", video);
+                dlBtn.style.display = "inline-flex";
+            } else { dlBtn.style.display = "none"; }
             
-            const audio = document.getElementById('vibeAudio');
-            if (viewId !== 'homeView' && !audio.paused) {
-                audio.pause();
-                document.getElementById('vibeToggleBtn').innerText = "Play Vibe";
-            }
-
-            if(viewId === 'homeView') loadHomeFeed();
-            if(viewId === 'shortsView') loadShortsFeed();
-            if(viewId === 'uploadView' && userChannelKey) {
-                const currentCredits = await getUserCredits();
-                updateCreditsUI(currentCredits);
-            }
-            if(viewId === 'authView' && userChannelKey) {
-                const currentCredits = await getUserCredits();
-                updateCreditsUI(currentCredits);
-            }
+            resetBtn.style.display = "inline-flex";
+            if (meta.creator && meta.creator !== "Unknown Creator") { showCreatorGrid(meta.creator); } else { showRandomVideos(); }
         }
 
-        function stringToColor(str) {
-            let hash = 0;
-            for (let i = 0; i < str.length; i++) {
-                hash = str.charCodeAt(i) + ((hash << 5) - hash);
-            }
-            let color = '#';
-            for (let i = 0; i < 3; i++) {
-                let value = (hash >> (i * 8)) & 0xFF;
-                color += ('00' + value.toString(16)).slice(-2);
-            }
-            return color;
-        }
-
-        function renderPfpElement(name, pfpUrl, size = 50) {
-            const initial = name ? name.charAt(0).toUpperCase() : "?";
-            const style = `width: ${size}px; height: ${size}px; font-size: ${size === 50 ? 20 : 36}px;`;
-            if (pfpUrl && pfpUrl.startsWith("data:image")) {
-                return `<img src="${pfpUrl}" class="pfp-avatar" style="${style}" alt="pfp" loading="eager">`;
-            } else {
-                const bgColor = stringToColor(name || "User");
-                return `<div class="pfp-avatar" style="${style} background-color: ${bgColor};">${initial}</div>`;
-            }
-        }
-
-        async function syncUserChannel(user) {
-            const channelsSnap = await get(child(ref(database), 'channels'));
-            userChannelKey = null;
-            let channelNameVal = "";
-            
-            if(channelsSnap.exists()) {
-                channelsSnap.forEach((chanSnap) => {
-                    if(chanSnap.val().ownerUid === user.uid) {
-                        userChannelKey = chanSnap.key;
-                        channelNameVal = chanSnap.val().name || "Channel";
-                        document.getElementById('desiredChannelName').value = chanSnap.val().name || "";
-                        
-                        const theme = chanSnap.val().theme || {};
-                        document.getElementById('themeBgColor').value = theme.bgColor || "#f9f9f9";
-                        document.getElementById('themeHeaderColor').value = theme.headerColor || "#ffffff";
-                        document.getElementById('themeTextColor').value = theme.textColor || "#111111";
-                        document.getElementById('themeAccentColor').value = theme.accentColor || "#ff0000";
-                    }
-                });
-            }
-
-            const authStatusEl = document.getElementById('authStatus');
-            if (userChannelKey) {
-                authStatusEl.innerHTML = `<span style="cursor: pointer; color: #0066cc; text-decoration: underline; font-weight: bold;" onclick="openChannelPage('${userChannelKey}', '${escapeHtml(channelNameVal)}')">${escapeHtml(channelNameVal)}</span>`;
-                updateNotificationsBadge();
-                const currentCredits = await getUserCredits();
-                updateCreditsUI(currentCredits);
-            } else {
-                authStatusEl.innerHTML = `<span>(⚠️ Channel Uninitialized)</span>`;
-            }
-
-            const handleText = userChannelKey ? channelNameVal : "⚠️ Setup Channel in Account Tab First";
-            document.getElementById('uploaderDisplayHandle').innerText = handleText;
-            document.getElementById('currentUserChannelName').innerText = handleText;
-        }
-
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                loggedInUser = user;
-                document.getElementById('authNavBtn').innerText = "Account";
-                document.getElementById('loginBox').style.display = 'none';
-                
-                await syncUserChannel(user);
-
-                document.getElementById('channelSetupBox').style.display = 'block';
-                document.getElementById('uploadNavBtn').style.display = 'inline-block';
-            } else {
-                loggedInUser = null;
-                userChannelKey = null;
-                document.getElementById('authStatus').innerHTML = "Not Logged In";
-                document.getElementById('authNavBtn').innerText = "Account";
-                document.getElementById('loginBox').style.display = 'block';
-                document.getElementById('channelSetupBox').style.display = 'none';
-                document.getElementById('uploadNavBtn').style.display = 'none';
-                document.getElementById('notifCount').style.display = 'none';
+        document.getElementById('player').addEventListener('loadedmetadata', function() {
+            const trueDuration = formatDuration(this.duration);
+            if (trueDuration && currentlyPlayingTitle) {
+                const fullDisplay = `[${trueDuration}] ${currentlyPlayingTitle}`;
+                document.getElementById('search').value = fullDisplay;
+                document.getElementById('status').textContent = "Now playing: " + fullDisplay;
             }
         });
 
-        window.handleSignUp = async function() {
-            const email = document.getElementById('authEmail').value.trim().toLowerCase();
-            const pass = document.getElementById('authPassword').value;
-            if(!email) { alert("Please provide an email."); return; }
-
-            const channelKey = email.replace(/[^a-zA-Z0-9_]/g, "");
-            const existingChannelSnap = await get(child(ref(database), `channels/${channelKey}`));
-            if (existingChannelSnap.exists()) {
-                alert("A channel or account already exists with this exact email address! Please log in instead.");
-                return;
+        function toggleLoop() {
+            const player = document.getElementById('player');
+            if (player.src) {
+                player.loop = !player.loop;
+                document.getElementById('loopBtn').classList.toggle('active', player.loop);
+                document.getElementById('loopText').textContent = player.loop ? "Looping: ON" : "Looping: OFF";
             }
+        }
 
-            try {
-                const cred = await createUserWithEmailAndPassword(auth, email, pass);
-                const defaultChannelName = email.split('@')[0];
-                await set(ref(database, `channels/${channelKey}`), {
-                    ownerUid: cred.user.uid,
-                    name: defaultChannelName,
-                    pfp: "",
-                    credits: 5, // Give starting bonus credits
-                    theme: { bgColor: "#f9f9f9", headerColor: "#ffffff", textColor: "#111111", accentColor: "#ff0000" },
-                    createdAt: Date.now()
+        function showRandomVideos() {
+            document.getElementById('creatorHeader').textContent = "Discover Videos";
+            const shuffled = [...serverVideos].sort(() => 0.5 - Math.random());
+            buildGridCards(shuffled.slice(0, 9));
+        }
+
+        function showCreatorGrid(creatorName) {
+            document.getElementById('creatorHeader').textContent = `More Videos From: ${creatorName}`;
+            const matches = serverVideos.filter(video => parseVideoMeta(video).creator.toLowerCase() === creatorName.toLowerCase());
+            buildGridCards(matches);
+        }
+
+        function buildGridCards(videoList) {
+            const grid = document.getElementById('thumbnailGrid');
+            grid.innerHTML = ""; 
+            videoList.forEach(video => {
+                const meta = parseVideoMeta(video);
+                const videoSrc = VIDEO_FOLDER + encodeURIComponent(video);
+                const baseName = video.replace(/\.[^/.]+$/, "");
+                const card = document.createElement('div');
+                card.className = "video-card";
+                card.onclick = () => { selectVideo(video); window.scrollTo({ top: 0, behavior: 'smooth' }); };
+
+                const previewDiv = document.createElement('div');
+                previewDiv.className = "thumb-preview";
+                const thumbImage = document.createElement('img');
+                thumbImage.src = `${THUMBNAIL_FOLDER}${encodeURIComponent(baseName)}.jpg`;
+                thumbImage.onerror = function() {
+                    if (this.src.endsWith('.jpg')) this.src = `${THUMBNAIL_FOLDER}${encodeURIComponent(baseName)}.png`;
+                    else this.src = `${THUMBNAIL_FOLDER}DEFAULT-THUMBNAIL.png`;
+                };
+                previewDiv.appendChild(thumbImage);
+
+                const hiddenMetaVideo = document.createElement('video');
+                hiddenMetaVideo.src = videoSrc + "#t=0.1";
+                hiddenMetaVideo.preload = "metadata";
+                hiddenMetaVideo.muted = true;
+
+                const detailsDiv = document.createElement('div');
+                detailsDiv.className = "card-details";
+                const titleDiv = document.createElement('div');
+                titleDiv.className = "card-title";
+
+                hiddenMetaVideo.addEventListener('loadedmetadata', function() {
+                    const trueDuration = formatDuration(this.duration);
+                    if (trueDuration) {
+                        const dSpan = document.createElement('span');
+                        dSpan.className = "title-duration";
+                        dSpan.textContent = trueDuration;
+                        titleDiv.insertBefore(dSpan, titleDiv.firstChild);
+                    }
                 });
-                alert("Account and channel created successfully with 5 starting credits!");
-            } catch (err) { alert(err.message); }
-        }
-
-        window.handleLogin = async function() {
-            const email = document.getElementById('authEmail').value.trim().toLowerCase();
-            const pass = document.getElementById('authPassword').value;
-            if(!email) { alert("Please provide an email."); return; }
-            try {
-                await signInWithEmailAndPassword(auth, email, pass);
-                switchView('homeView');
-            } catch (err) { alert(err.message); }
-        }
-
-        window.saveChannelProfile = async function() {
-            if (!loggedInUser) {
-                alert("Please log in first.");
-                return;
-            }
-
-            const channelName = document.getElementById('desiredChannelName').value.trim();
-            if(!channelName) {
-                alert("Please provide a channel name.");
-                return;
-            }
-
-            const channelKey = loggedInUser.email.replace(/[^a-zA-Z0-9_]/g, "");
-            const pfpFile = document.getElementById('pfpFile').files[0];
-            const statusText = document.getElementById('authStatusText');
-
-            const theme = {
-                bgColor: document.getElementById('themeBgColor').value,
-                headerColor: document.getElementById('themeHeaderColor').value,
-                textColor: document.getElementById('themeTextColor').value,
-                accentColor: document.getElementById('themeAccentColor').value
-            };
-
-            statusText.innerText = "Saving profile and theme...";
-            
-            const channelsSnap = await get(child(ref(database), `channels/${channelKey}`));
-            let pfpData = "";
-            let existingCredits = 5;
-            if (pfpFile) {
-                pfpData = await fileToBase64(pfpFile);
-            } else if (channelsSnap.exists()) {
-                pfpData = channelsSnap.val().pfp || "";
-            }
-
-            if(channelsSnap.exists() && channelsSnap.val().credits !== undefined) {
-                existingCredits = channelsSnap.val().credits;
-            }
-
-            await set(ref(database, `channels/${channelKey}`), {
-                ownerUid: loggedInUser.uid,
-                name: channelName,
-                pfp: pfpData,
-                credits: existingCredits,
-                theme: theme,
-                createdAt: channelsSnap.exists() ? channelsSnap.val().createdAt : Date.now()
-            });
-
-            userChannelKey = channelKey;
-            await syncUserChannel(loggedInUser);
-            statusText.innerText = "Channel profile & themes saved!";
-            alert("Customized channel preferences saved successfully!");
-            switchView('homeView');
-        }
-
-        window.deleteVideo = async function(videoId) {
-            if(!confirm("Are you sure you want to permanently delete this video?")) return;
-            try {
-                await Promise.all([
-                    remove(ref(database, `video-details/${videoId}`)),
-                    remove(ref(database, `video-data/${videoId}`)),
-                    remove(ref(database, `comments/${videoId}`)),
-                    remove(ref(database, `likes/${videoId}`)),
-                    remove(ref(database, `views/${videoId}`))
-                ]);
-                alert("Video deleted successfully.");
-                if(document.getElementById('watchView').classList.contains('active')) {
-                    switchView('homeView');
-                } else if(document.getElementById('searchView').classList.contains('active')) {
-                    triggerSearch();
-                } else if(document.getElementById('channelView').classList.contains('active') && userChannelKey) {
-                    openChannelPage(userChannelKey, document.getElementById('channelPageTitle').innerText);
-                } else {
-                    loadHomeFeed();
-                }
-            } catch(err) {
-                alert("Failed to delete video: " + err.message);
-            }
-        }
-
-        window.renameVideo = async function(videoId, currentTitle) {
-            const newTitle = prompt("Enter a new title for your video:", currentTitle);
-            if(!newTitle || !newTitle.trim()) return;
-            const trimmedTitle = newTitle.trim();
-            try {
-                await set(ref(database, `video-details/${videoId}/Video-name`), trimmedTitle);
-                alert("Video renamed successfully!");
-                if(document.getElementById('watchView').classList.contains('active')) {
-                    document.getElementById('watchTitle').innerText = trimmedTitle;
-                } else if(document.getElementById('searchView').classList.contains('active')) {
-                    triggerSearch();
-                } else if(document.getElementById('channelView').classList.contains('active') && userChannelKey) {
-                    openChannelPage(userChannelKey, document.getElementById('channelPageTitle').innerText);
-                } else {
-                    loadHomeFeed();
-                }
-            } catch(err) {
-                alert("Failed to rename video: " + err.message);
-            }
-        }
-
-        function fileToBase64(file) {
-            return new Promise((resolve) => {
-                const reader = new FileReader();
-                reader.onloadend = () => resolve(reader.result);
-                reader.readAsDataURL(file);
-            });
-        }
-
-        async function triggerFollowerNotifications(creatorKey, channelName, videoId, videoTitle) {
-            const subsSnap = await get(child(ref(database), `subscribers/${creatorKey}`));
-            if(subsSnap.exists()) {
-                const notifPromises = [];
-                subsSnap.forEach(sub => {
-                    const followerChannelKey = sub.key;
-                    const newNotifRef = push(ref(database, `notifications/${followerChannelKey}`));
-                    notifPromises.push(set(newNotifRef, {
-                        channelKey: creatorKey,
-                        channelName: channelName,
-                        videoId: videoId,
-                        videoTitle: videoTitle,
-                        read: false,
-                        createdAt: Date.now()
-                    }));
-                });
-                await Promise.all(notifPromises);
-            }
-        }
-
-        window.uploadVideoFile = async function() {
-            if (!loggedInUser) {
-                alert("Please log in to upload videos.");
-                return;
-            }
-
-            userChannelKey = loggedInUser.email.replace(/[^a-zA-Z0-9_]/g, "");
-            const channelsSnap = await get(child(ref(database), `channels/${userChannelKey}`));
-            const channelName = channelsSnap.exists() && channelsSnap.val().name ? channelsSnap.val().name : "Creator";
-            const currentCredits = channelsSnap.exists() && channelsSnap.val().credits !== undefined ? channelsSnap.val().credits : 0;
-
-            const file = document.getElementById('videoFile').files[0];
-            const videoNameInput = document.getElementById('videoName').value.trim();
-            const MAX_FILE_SIZE = 100 * 1024 * 1024;
-            if (file && file.size > MAX_FILE_SIZE) {
-                alert(`File is too large. The maximum video size is 100 MB. Your file is ${(file.size / 1024 / 1024).toFixed(1)} MB.`);
-                return;
-            }
-            if (file) {
-                const previewChunks = Math.ceil(file.size / CHUNK_SIZE);
-                document.getElementById('fileSizeInfo').innerText = `${(file.size / 1024 / 1024).toFixed(1)} MB • ${previewChunks} chunks • 5 MB per chunk`;
-            }
-            const status = document.getElementById('status');
-            const publishBtn = document.getElementById('publishFileBtn');
-            const progressContainer = document.getElementById('progressBarContainer');
-            const progressFill = document.getElementById('progressBarFill');
-            const progressText = document.getElementById('progressBarText');
-
-            if (!file || !videoNameInput) {
-                alert("Provide both a video file and a title.");
-                return;
-            }
-
-            const videoCheckObj = document.createElement('video');
-            videoCheckObj.src = URL.createObjectURL(file);
-            
-            await new Promise((resolve) => {
-                videoCheckObj.onloadedmetadata = () => resolve();
-                videoCheckObj.onerror = () => resolve();
-            });
-
-            const duration = videoCheckObj.duration || 0;
-            const requiredCredits = calculateRequiredCredits(duration);
-
-            if(currentCredits < requiredCredits) {
-                alert(`Insufficient credits! This video requires ${requiredCredits} credits (Duration: ${Math.round(duration)}s), but you only have ${currentCredits} credits. Watch ads in your Account tab to earn more!`);
-                return;
-            }
-
-            publishBtn.disabled = true;
-            progressContainer.style.display = 'block';
-            status.innerText = "Analyzing video specs...";
-            progressFill.style.width = '2%';
-            progressText.innerText = '2%';
-
-            try {
-                const width = videoCheckObj.videoWidth || 1;
-                const height = videoCheckObj.videoHeight || 1;
-                const isVerticalOrSquare = height >= width;
-                const isShort = (duration <= 120 && isVerticalOrSquare);
-
-                const sanitizedVideoTitle = videoNameInput.replace(/[^a-zA-Z0-9]/g, "");
-                if (!sanitizedVideoTitle) {
-                    alert("Please use alphanumeric characters for your video title.");
-                    publishBtn.disabled = false;
-                    progressContainer.style.display = 'none';
-                    return;
-                }
-
-                const videoId = sanitizedVideoTitle + "_" + Date.now();
                 
-                const thumbnail = await new Promise((resolve) => {
-                    const vid = document.createElement('video');
-                    vid.src = URL.createObjectURL(file);
-                    vid.muted = true;
-                    vid.onloadedmetadata = () => { vid.currentTime = 1; };
-                    vid.onseeked = () => {
-                        const canvas = document.createElement('canvas');
-                        canvas.width = 320; canvas.height = 180;
-                        canvas.getContext('2d').drawImage(vid, 0, 0, 320, 180);
-                        resolve(canvas.toDataURL('image/jpeg', 0.8));
-                    };
-                    vid.onerror = () => resolve("");
-                });
-
-                status.innerText = "Preparing chunk upload...";
-                progressFill.style.width = '10%';
-                progressText.innerText = '10%';
-
-                let start = 0, index = 1;
-                const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
-                const chunkPromises = [];
-
-                while (start < file.size) {
-                    const chunkBlob = file.slice(start, start + CHUNK_SIZE);
-                    const currentIndex = index;
-                    
-                    const chunkPromise = fileToBase64(chunkBlob).then(async (base64Chunk) => {
-                        await set(ref(database, `video-data/${videoId}/Video-Chunk${currentIndex}`), base64Chunk);
-                        
-                        const currentDone = parseInt(progressFill.style.width) || 10;
-                        const increment = Math.max(1, Math.floor(80 / totalChunks));
-                        const newPct = Math.min(90, currentDone + increment);
-                        progressFill.style.width = newPct + '%';
-                        progressText.innerText = newPct + '%';
-                        status.innerText = `Uploading chunks (${currentIndex}/${totalChunks})...`;
-                    });
-
-                    chunkPromises.push(chunkPromise);
-                    start += CHUNK_SIZE;
-                    index++;
-                }
-
-                await Promise.all(chunkPromises);
-
-                // Deduct credits
-                const updatedCredits = currentCredits - requiredCredits;
-                await set(ref(database, `channels/${userChannelKey}/credits`), updatedCredits);
-                updateCreditsUI(updatedCredits);
-
-                status.innerText = "Finalizing upload...";
-                await Promise.all([
-                    set(ref(database, `video-details/${videoId}`), {
-                        "Video-name": videoNameInput,
-                        "Video-Thumbnail": thumbnail,
-                        "Video-Creator": channelName,
-                        "CreatorKey": userChannelKey,
-                        "isShort": isShort
-                    }),
-                    set(ref(database, `video-data/${videoId}/totalChunks`), totalChunks),
-                    set(ref(database, `video-data/${videoId}/mimeType`), file.type || "video/mp4")
-                ]);
-
-                await triggerFollowerNotifications(userChannelKey, channelName, videoId, videoNameInput);
-
-                progressFill.style.width = '100%';
-                progressText.innerText = '100%';
-                status.innerText = "Upload complete!";
-                
-                setTimeout(() => {
-                    publishBtn.disabled = false;
-                    progressContainer.style.display = 'none';
-                    document.getElementById('videoName').value = "";
-                    document.getElementById('videoFile').value = "";
-                    alert(isShort ? `Short successfully published! (${requiredCredits} credits deducted)` : `Video successfully published! (${requiredCredits} credits deducted)`);
-                    switchView(isShort ? 'shortsView' : 'homeView');
-                }, 400);
-
-            } catch (err) {
-                console.error(err);
-                alert("Upload failed: " + err.message);
-                publishBtn.disabled = false;
-                progressContainer.style.display = 'none';
-                status.innerText = "Error during upload.";
-            }
-        };
-
-        window.importVideoLink = async function() {
-            if (!loggedInUser) {
-                alert("Please log in to import videos.");
-                return;
-            }
-
-            userChannelKey = loggedInUser.email.replace(/[^a-zA-Z0-9_]/g, "");
-            const channelsSnap = await get(child(ref(database), `channels/${userChannelKey}`));
-            const channelName = channelsSnap.exists() && channelsSnap.val().name ? channelsSnap.val().name : "Creator";
-            const currentCredits = channelsSnap.exists() && channelsSnap.val().credits !== undefined ? channelsSnap.val().credits : 0;
-
-            const videoUrl = document.getElementById('videoUrlInput').value.trim();
-            const videoNameInput = document.getElementById('videoName').value.trim();
-            const status = document.getElementById('status');
-            const publishBtn = document.getElementById('publishLinkBtn');
-
-            if (!videoUrl || !videoNameInput) {
-                alert("Provide both a direct .mp4 URL link and a title.");
-                return;
-            }
-
-            publishBtn.disabled = true;
-            status.innerText = "Validating and testing direct link...";
-
-            try {
-                const videoCheckObj = document.createElement('video');
-                videoCheckObj.crossOrigin = "anonymous";
-                videoCheckObj.src = videoUrl;
-
-                await new Promise((resolve, reject) => {
-                    videoCheckObj.onloadedmetadata = () => resolve();
-                    videoCheckObj.onerror = () => reject(new Error("Could not load video metadata. The URL might be broken, or CORS blocked the resource."));
-                });
-
-                const duration = videoCheckObj.duration || 0;
-                const requiredCredits = calculateRequiredCredits(duration);
-
-                if(currentCredits < requiredCredits) {
-                    alert(`Insufficient credits! This video requires ${requiredCredits} credits (Duration: ${Math.round(duration)}s), but you only have ${currentCredits} credits. Watch ads in your Account tab to earn more!`);
-                    publishBtn.disabled = false;
-                    status.innerText = "";
-                    return;
-                }
-
-                const width = videoCheckObj.videoWidth || 1;
-                const height = videoCheckObj.videoHeight || 1;
-                const isVerticalOrSquare = height >= width;
-                const isShort = (duration <= 120 && isVerticalOrSquare);
-
-                const sanitizedVideoTitle = videoNameInput.replace(/[^a-zA-Z0-9]/g, "");
-                if (!sanitizedVideoTitle) {
-                    alert("Please use alphanumeric characters for your video title.");
-                    publishBtn.disabled = false;
-                    return;
-                }
-
-                const videoId = sanitizedVideoTitle + "_" + Date.now();
-
-                status.innerText = "Generating thumbnail snapshot...";
-                const thumbnail = await new Promise((resolve) => {
-                    const vid = document.createElement('video');
-                    vid.crossOrigin = "anonymous";
-                    vid.src = videoUrl;
-                    vid.muted = true;
-                    vid.onloadedmetadata = () => { vid.currentTime = 1; };
-                    vid.onseeked = () => {
-                        try {
-                            const canvas = document.createElement('canvas');
-                            canvas.width = 320; canvas.height = 180;
-                            canvas.getContext('2d').drawImage(vid, 0, 0, 320, 180);
-                            resolve(canvas.toDataURL('image/jpeg', 0.8));
-                        } catch (e) {
-                            resolve("");
-                        }
-                    };
-                    vid.onerror = () => resolve("");
-                });
-
-                // Deduct credits
-                const updatedCredits = currentCredits - requiredCredits;
-                await set(ref(database, `channels/${userChannelKey}/credits`), updatedCredits);
-                updateCreditsUI(updatedCredits);
-
-                status.innerText = "Saving imported link to database...";
-                await Promise.all([
-                    set(ref(database, `video-details/${videoId}`), {
-                        "Video-name": videoNameInput,
-                        "Video-Thumbnail": thumbnail,
-                        "Video-Creator": channelName,
-                        "CreatorKey": userChannelKey,
-                        "isShort": isShort
-                    }),
-                    set(ref(database, `video-data/${videoId}`), {
-                        totalChunks: 1,
-                        "Video-Chunk1": videoUrl
-                    })
-                ]);
-
-                await triggerFollowerNotifications(userChannelKey, channelName, videoId, videoNameInput);
-
-                status.innerText = "Import complete!";
-                publishBtn.disabled = false;
-                document.getElementById('videoName').value = "";
-                document.getElementById('videoUrlInput').value = "";
-                alert(isShort ? `Short link successfully imported! (${requiredCredits} credits deducted)` : `Video link successfully imported! (${requiredCredits} credits deducted)`);
-                switchView(isShort ? 'shortsView' : 'homeView');
-
-            } catch (err) {
-                console.error(err);
-                alert("Import failed: " + err.message);
-                publishBtn.disabled = false;
-                status.innerText = "Error importing link.";
-            }
-        };
-
-        async function loadHomeFeed() {
-            const grid = document.getElementById('videoGrid');
-            if(!grid) return;
-            grid.innerHTML = '<div class="loader">Loading videos...</div>';
-
-            try {
-                const snap = await get(child(ref(database), 'video-details'));
-                if (!snap.exists()) {
-                    grid.innerHTML = "<p>No videos found.</p>";
-                    return;
-                }
-
-                let channelsSnap = null;
-                let viewsRootSnap = null;
-                try {
-                    [channelsSnap, viewsRootSnap] = await Promise.all([
-                        get(child(ref(database), 'channels')),
-                        get(child(ref(database), 'views'))
-                    ]);
-                } catch (metaErr) {
-                    console.warn('Optional channel/view data unavailable:', metaErr);
-                }
-
-                const viewsMap = {};
-                if(viewsRootSnap && viewsRootSnap.exists()) {
-                    viewsRootSnap.forEach(v => {
-                        const value = v.val();
-                        viewsMap[v.key] = value && typeof value === 'object' ? Object.keys(value).length : 0;
-                    });
-                }
-                const channelsMap = {};
-                if(channelsSnap && channelsSnap.exists()) {
-                    channelsSnap.forEach(c => {
-                        channelsMap[c.key] = { name: c.val().name || c.key, pfp: c.val().pfp || "" };
-                    });
-                }
-
-                grid.innerHTML = '';
-                snap.forEach((vidSnap) => {
-                    const vidKey = vidSnap.key;
-                    const details = vidSnap.val() || {};
-                    const creatorKey = details["CreatorKey"] || "";
-                    const creatorName = (channelsMap[creatorKey] && channelsMap[creatorKey].name) ? channelsMap[creatorKey].name : (details["Video-Creator"] || "Unknown");
-                    const pfpUrl = (channelsMap[creatorKey] && channelsMap[creatorKey].pfp) ? channelsMap[creatorKey].pfp : "";
-                    const card = document.createElement('div');
-                    card.className = 'video-card';
-                    card.onclick = () => watchVideo(vidKey);
-                    let ownerActionsHtml = '';
-                    if(loggedInUser && userChannelKey === creatorKey) {
-                        ownerActionsHtml = `<div class="owner-actions-overlay"><button class="owner-action-badge" onclick="event.stopPropagation(); renameVideo('${vidKey}', '${escapeHtml(details["Video-name"] || '')}')">Rename</button><button class="owner-action-badge" onclick="event.stopPropagation(); deleteVideo('${vidKey}')">Delete</button></div>`;
-                    }
-                    card.innerHTML = `${ownerActionsHtml}<img src="${details["Video-Thumbnail"] || ''}" loading="eager"><div class="video-info"><div class="card-pfp-wrap">${renderPfpElement(creatorName, pfpUrl, 50)}</div><div><div class="video-title">${escapeHtml(details["Video-name"] || 'Untitled video')}</div><div class="channel-name">${escapeHtml(creatorName)}</div><div style="font-size:12px;color:#777;margin-top:4px;">${viewsMap[vidKey] || 0} views</div></div></div>`;
-                    const img = card.querySelector('img');
-                    if(img) img.onclick = (e) => { e.stopPropagation(); watchVideo(vidKey); };
-                    const title = card.querySelector('.video-title');
-                    if(title) title.onclick = (e) => { e.stopPropagation(); watchVideo(vidKey); };
-                    const channel = card.querySelector('.channel-name');
-                    if(channel) channel.onclick = (e) => { e.stopPropagation(); openChannelPage(creatorKey, creatorName); };
-                    grid.appendChild(card);
-                });
-            } catch (err) {
-                console.error('Home feed failed:', err);
-                grid.innerHTML = `<p style="color:#b00020;">Could not load videos: ${escapeHtml(err.message || 'Unknown error')}</p>`;
-            }
-        }
-
-        async function loadShortsFeed() {
-            const container = document.getElementById('shortsContainer');
-            container.innerHTML = '<div class="loader">Loading shorts...</div>';
-
-            const [snap, channelsSnap] = await Promise.all([
-                get(child(ref(database), 'video-details')),
-                get(child(ref(database), 'channels'))
-            ]);
-
-            const channelsMap = {};
-            if(channelsSnap.exists()) {
-                channelsSnap.forEach(c => {
-                    channelsMap[c.key] = c.val().name || c.key;
-                });
-            }
-
-            cachedShorts = [];
-            if (snap.exists()) {
-                snap.forEach((vidSnap) => {
-                    const details = vidSnap.val();
-                    if (details["isShort"] === true) {
-                        cachedShorts.push({ key: vidSnap.key, details });
-                    }
-                });
-            }
-
-            currentShortIndex = 0;
-            if (cachedShorts.length === 0) {
-                container.innerHTML = "<p>No vertical or square shorts under 2 minutes available yet.</p>";
-                document.getElementById('shortPrevBtn').style.display = 'none';
-                document.getElementById('shortNextBtn').style.display = 'none';
-                return;
-            }
-
-            document.getElementById('shortPrevBtn').style.display = 'inline-block';
-            document.getElementById('shortNextBtn').style.display = 'inline-block';
-            renderCurrentShort();
-        }
-
-        async function renderCurrentShort() {
-            const container = document.getElementById('shortsContainer');
-            container.innerHTML = '<div class="loader">Loading short...</div>';
-
-            if (cachedShorts.length === 0) return;
-
-            const item = cachedShorts[currentShortIndex];
-            const vidSnapKey = item.key;
-            const details = item.details;
-            const creatorKey = details["CreatorKey"] || "";
-            const channelsSnap = await get(child(ref(database), `channels/${creatorKey}`));
-            const creatorName = (channelsSnap.exists() && channelsSnap.val().name) ? channelsSnap.val().name : (details["Video-Creator"] || "Unknown");
-
-            const shortCard = document.createElement('div');
-            shortCard.className = 'short-card';
-
-            let ownerActionsHtml = "";
-            if(loggedInUser && userChannelKey === creatorKey) {
-                ownerActionsHtml = `
-                    <div class="owner-actions-overlay">
-                        <button class="owner-action-badge" onclick="event.stopPropagation(); renameVideo('${vidSnapKey}', '${escapeHtml(details["Video-name"])}')">Rename</button>
-                        <button class="owner-action-badge" onclick="event.stopPropagation(); deleteVideo('${vidSnapKey}')">Delete</button>
-                    </div>
-                `;
-            }
-
-            const videoEl = document.createElement('video');
-            videoEl.controls = true;
-            videoEl.loop = true;
-            videoEl.autoplay = true;
-            videoEl.setAttribute('playsinline', '');
-
-            const dataSnap = await get(child(ref(database), `video-data/${vidSnapKey}`));
-            if(dataSnap.exists()) {
-                const dataObj = dataSnap.val();
-                const totalChunks = dataObj.totalChunks;
-                
-                if (totalChunks === 1 && dataObj["Video-Chunk1"].startsWith("http")) {
-                    videoEl.src = dataObj["Video-Chunk1"];
-                } else {
-                    const parts = [];
-                    for (let i = 1; i <= totalChunks; i++) {
-                        const res = await fetch(dataObj[`Video-Chunk${i}`]);
-                        parts.push(await res.blob());
-                    }
-                    videoEl.src = URL.createObjectURL(new Blob(parts, { type: 'video/mp4' }));
-                }
-            }
-
-            const overlay = document.createElement('div');
-            overlay.className = 'short-overlay';
-            overlay.innerHTML = `
-                <div class="channel-name" onclick="openChannelPage('${creatorKey}', '${escapeHtml(creatorName)}')">${escapeHtml(creatorName)}</div>
-                <div class="video-title">${escapeHtml(details["Video-name"])}</div>
-            `;
-
-            shortCard.innerHTML = ownerActionsHtml;
-            shortCard.appendChild(videoEl);
-            shortCard.appendChild(overlay);
-
-            container.innerHTML = "";
-            container.appendChild(shortCard);
-
-            document.getElementById('shortPrevBtn').disabled = currentShortIndex === 0;
-            document.getElementById('shortNextBtn').disabled = currentShortIndex === cachedShorts.length - 1;
-        }
-
-        window.navigateShort = function(direction) {
-            currentShortIndex += direction;
-            if (currentShortIndex < 0) currentShortIndex = 0;
-            if (currentShortIndex >= cachedShorts.length) currentShortIndex = cachedShorts.length - 1;
-            renderCurrentShort();
-        }
-
-        window.openChannelPage = async function(creatorKey, defaultName) {
-            switchView('channelView');
-            
-            const chanSnap = await get(child(ref(database), `channels/${creatorKey}`));
-            let creatorName = defaultName;
-            let pfpUrl = "";
-            let theme = { bgColor: "#f9f9f9", headerColor: "#ffffff", textColor: "#111111", accentColor: "#ff0000" };
-
-            if (chanSnap.exists()) {
-                const chanData = chanSnap.val();
-                if(chanData.name) creatorName = chanData.name;
-                pfpUrl = chanData.pfp || "";
-                if(chanData.theme) {
-                    theme = { ...theme, ...chanData.theme };
-                }
-            }
-
-            document.getElementById('channelPageTitle').innerText = creatorName;
-            
-            const avatarContainer = document.getElementById('channelPageAvatar');
-            avatarContainer.innerHTML = "";
-
-            const chanView = document.getElementById('channelView');
-            const chanHeader = document.getElementById('channelHeaderBox');
-            const chanTitle = document.getElementById('channelPageTitle');
-            const chanVidTitle = document.getElementById('channelVideoSectionTitle');
-
-            chanView.style.backgroundColor = theme.bgColor;
-            chanView.style.color = theme.textColor;
-            chanHeader.style.backgroundColor = theme.headerColor;
-            chanHeader.style.color = theme.textColor;
-            chanTitle.style.color = theme.accentColor;
-            if(chanVidTitle) chanVidTitle.style.color = theme.accentColor;
-
-            avatarContainer.innerHTML = renderPfpElement(creatorName, pfpUrl, 90);
-            renderFollowButton(creatorKey, creatorName, 'channelFollowActionContainer');
-
-            const grid = document.getElementById('channelVideoGrid');
-            grid.innerHTML = '<div class="loader">Loading channel videos...</div>';
-
-            const snap = await get(child(ref(database), 'video-details'));
-            grid.innerHTML = "";
-
-            let foundAny = false;
-            snap.forEach((vidSnap) => {
-                const vidKey = vidSnap.key;
-                const details = vidSnap.val();
-                if (details["CreatorKey"] === creatorKey) {
-                    foundAny = true;
-                    const card = document.createElement('div');
-                    card.className = 'video-card';
-                    card.onclick = () => watchVideo(vidKey);
-
-                    let ownerActionsHtml = "";
-                    if(loggedInUser && userChannelKey === creatorKey) {
-                        ownerActionsHtml = `
-                            <div class="owner-actions-overlay">
-                                <button class="owner-action-badge" onclick="event.stopPropagation(); renameVideo('${vidKey}', '${escapeHtml(details["Video-name"])}')">Rename</button>
-                                <button class="owner-action-badge" onclick="event.stopPropagation(); deleteVideo('${vidKey}')">Delete</button>
-                            </div>
-                        `;
-                    }
-
-                    card.innerHTML = `
-                        ${ownerActionsHtml}
-                        <img src="${details["Video-Thumbnail"] || ''}" loading="eager">
-                        <div class="video-info">
-                            <div>
-                                <div class="video-title">${escapeHtml(details["Video-name"])}</div>
-                                <div class="channel-name">${escapeHtml(creatorName)}</div>
-                            </div>
-                        </div>
-                    `;
-                    grid.appendChild(card);
-                }
-            });
-
-            if (!foundAny) {
-                grid.innerHTML = "<p>This channel hasn't uploaded any videos yet.</p>";
-            }
-        }
-
-        window.toggleLikeVideo = async function() {
-            if(!loggedInUser || !userChannelKey || !activeVideoId) {
-                alert("Please log in with an active channel to like videos.");
-                return;
-            }
-            const likeRef = ref(database, `likes/${activeVideoId}/${userChannelKey}`);
-            const likeSnap = await get(likeRef);
-            if(likeSnap.exists()) {
-                await set(likeRef, null);
-            } else {
-                await set(likeRef, true);
-            }
-            updateLikeAndCountStatus(activeVideoId);
-        }
-
-        async function updateLikeAndCountStatus(videoId) {
-            const likesSnap = await get(child(ref(database), `likes/${videoId}`));
-            let likeCount = 0;
-            let userLiked = false;
-            if(likesSnap.exists()) {
-                likesSnap.forEach(l => {
-                    likeCount++;
-                    if(userChannelKey && l.key === userChannelKey) {
-                        userLiked = true;
-                    }
-                });
-            }
-            document.getElementById('likeCountDisplay').innerText = likeCount;
-            const likeBtn = document.getElementById('likeBtn');
-            if(userLiked) {
-                likeBtn.classList.add('liked');
-            } else {
-                likeBtn.classList.remove('liked');
-            }
-
-            const viewsSnap = await get(child(ref(database), `views/${videoId}`));
-            let viewCount = 0;
-            if(viewsSnap.exists()) {
-                viewsSnap.forEach(() => { viewCount++; });
-            }
-            document.getElementById('watchViewCountDisplay').innerText = `Views: ${viewCount}`;
-        }
-
-        let currentVideoDownloadUrl = "";
-        let currentVideoDownloadBlob = null;
-        let currentVideoFileName = "video.mp4";
-
-        function setDownloadState(enabled) {
-            const btn = document.getElementById("downloadVideoBtn");
-            if (!btn) return;
-            btn.disabled = !enabled;
-            btn.innerText = enabled ? "⬇ Download" : "⬇ Preparing...";
-        }
-
-        async function downloadCurrentVideo() {
-            if (!currentVideoDownloadUrl && !currentVideoDownloadBlob) {
-                alert("The video is still loading. Please wait until it is ready.");
-                return;
-            }
-            const btn = document.getElementById("downloadVideoBtn");
-            try {
-                if (btn) { btn.disabled = true; btn.innerText = "⬇ Preparing download..."; }
-                let blob = currentVideoDownloadBlob;
-                if (!blob && currentVideoDownloadUrl) {
-                    if (currentVideoDownloadUrl.startsWith("blob:")) {
-                        const response = await fetch(currentVideoDownloadUrl);
-                        blob = await response.blob();
-                    } else if (currentVideoDownloadUrl.startsWith("data:")) {
-                        const response = await fetch(currentVideoDownloadUrl);
-                        blob = await response.blob();
-                    } else {
-                        const response = await fetch(currentVideoDownloadUrl);
-                        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                        blob = await response.blob();
-                    }
-                }
-                if (blob) {
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement("a");
-                    a.href = url;
-                    a.download = currentVideoFileName || "video.mp4";
-                    document.body.appendChild(a);
-                    a.click();
-                    a.remove();
-                    setTimeout(() => URL.revokeObjectURL(url), 30000);
-                }
-            } catch (err) {
-                console.error("Download failed:", err);
-                if (currentVideoDownloadUrl) {
-                    const a = document.createElement("a");
-                    a.href = currentVideoDownloadUrl;
-                    a.download = currentVideoFileName || "video.mp4";
-                    a.target = "_blank";
-                    document.body.appendChild(a);
-                    a.click();
-                    a.remove();
-                } else {
-                    alert("Could not download this video: " + err.message);
-                }
-            } finally {
-                if (btn) { btn.disabled = false; btn.innerText = "⬇ Download"; }
-            }
-        }
-
-        window.watchVideo = async function(videoId) {
-            activeVideoId = videoId;
-            switchView('watchView');
-            const loadingOverlay = document.getElementById('videoLoadingOverlay');
-            const loadingFill = document.getElementById('videoLoadingFill');
-            const loadingText = document.getElementById('videoLoadingText');
-
-            loadingOverlay.classList.remove('hidden');
-            loadingFill.style.width = '0%';
-            loadingText.innerText = 'Fetching video source (0/0)';
-
-            document.getElementById('watchTitle').innerText = "Loading video...";
-            document.getElementById('watchChannel').innerText = "";
-            document.getElementById('watchPfpContainer').innerHTML = "";
-            document.getElementById('watchFollowContainer').innerHTML = "";
-            document.getElementById('commentsList').innerHTML = "";
-            videoPlayer.src = "";
-            currentVideoDownloadUrl = "";
-            currentVideoDownloadBlob = null;
-            currentVideoFileName = "video.mp4";
-            setDownloadState(false);
-
-            try {
-            if(loggedInUser && userChannelKey) {
-                await set(ref(database, `views/${videoId}/${userChannelKey}`), true);
-            }
-
-            const detailsSnap = await get(child(ref(database), `video-details/${videoId}`));
-            if (!detailsSnap.exists()) {
-                alert("This video has been deleted or no longer exists.");
-                switchView('homeView');
-                return;
-            }
-            const details = detailsSnap.val();
-            currentVideoFileName = ((details["Video-name"] || "video") + "").replace(/[^a-z0-9._ -]/gi, "_").trim() || "video";
-            currentVideoFileName += /\.(mp4|webm|ogg|mov)$/i.test(currentVideoFileName) ? "" : ".mp4";
-
-            document.getElementById('watchTitle').innerText = details["Video-name"];
-            const creatorKey = details["CreatorKey"];
-
-            const chanSnap = await get(child(ref(database), `channels/${creatorKey}`));
-            let creatorName = details["Video-Creator"];
-            let pfpUrl = "";
-            if (chanSnap.exists()) {
-                const chanData = chanSnap.val();
-                if(chanData.name) creatorName = chanData.name;
-                pfpUrl = chanData.pfp || "";
-            }
-
-            document.getElementById('watchChannel').innerText = creatorName;
-            document.getElementById('watchChannel').onclick = () => openChannelPage(creatorKey, creatorName);
-
-            const watchAvatarEl = renderPfpElement(creatorName, pfpUrl, 50);
-            const pfpWrap = document.createElement('div');
-            pfpWrap.innerHTML = watchAvatarEl;
-            pfpWrap.style.cursor = "pointer";
-            pfpWrap.onclick = () => openChannelPage(creatorKey, creatorName);
-            document.getElementById('watchPfpContainer').appendChild(pfpWrap);
-
-            renderFollowButton(creatorKey, creatorName, 'watchFollowContainer');
-            updateLikeAndCountStatus(videoId);
-
-            const dataSnap = await get(child(ref(database), `video-data/${videoId}`));
-            if (!dataSnap.exists()) {
-                throw new Error("No video data was found for this video.");
-            }
-
-            const dataObj = dataSnap.val() || {};
-            let totalChunks = Number(dataObj.totalChunks) || 0;
-            if (!totalChunks) {
-                totalChunks = Object.keys(dataObj).filter(k => /^Video-Chunk\d+$/.test(k)).length;
-            }
-            if (!totalChunks) {
-                throw new Error("The video has no stored chunks.");
-            }
-
-            const loadingDetails = document.getElementById('videoLoadingDetails');
-            const setLoadStatus = (text, pct, detail = '') => {
-                loadingText.innerText = text;
-                loadingFill.style.width = Math.max(0, Math.min(100, pct)) + '%';
-                if (loadingDetails) loadingDetails.innerText = detail;
-            };
-
-            setLoadStatus(
-                `Found ${totalChunks} video chunk${totalChunks === 1 ? '' : 's'}`,
-                3,
-                `${totalChunks} chunk${totalChunks === 1 ? '' : 's'} found in Firebase • preparing playback`
-            );
-
-            const firstChunk = dataObj["Video-Chunk1"];
-            if (typeof firstChunk !== 'string' || !firstChunk) {
-                throw new Error("Video chunk 1 is missing.");
-            }
-
-            // Imported/direct videos can be played without rebuilding a Blob.
-            if (totalChunks === 1 && /^(https?:\/\/|data:video\/)/i.test(firstChunk)) {
-                setLoadStatus('Loading video source (1/1)', 35, '1 chunk found • loading the video source');
-                videoPlayer.src = firstChunk;
-                currentVideoDownloadUrl = firstChunk;
-                await new Promise((resolve, reject) => {
-                    const ok = () => { cleanup(); resolve(); };
-                    const bad = () => { cleanup(); reject(new Error('The video source could not be decoded by the browser.')); };
-                    const cleanup = () => {
-                        videoPlayer.removeEventListener('loadedmetadata', ok);
-                        videoPlayer.removeEventListener('error', bad);
-                    };
-                    videoPlayer.addEventListener('loadedmetadata', ok, {once:true});
-                    videoPlayer.addEventListener('error', bad, {once:true});
-                    setTimeout(() => { if (videoPlayer.readyState >= 1) ok(); }, 15000);
-                });
-                setLoadStatus('Video ready — 1/1 chunk loaded', 100, 'Playback source loaded successfully');
-                setDownloadState(true);
-            } else {
-                const parts = [];
-                const mimeType = dataObj.mimeType || 'video/mp4';
-
-                for (let i = 1; i <= totalChunks; i++) {
-                    const key = `Video-Chunk${i}`;
-                    const source = dataObj[key];
-                    if (typeof source !== 'string' || !source) {
-                        throw new Error(`Video chunk ${i} of ${totalChunks} is missing.`);
-                    }
-
-                    const pctBefore = Math.round(((i - 1) / totalChunks) * 85);
-                    setLoadStatus(
-                        `Loading video chunks (${i - 1}/${totalChunks})`,
-                        pctBefore,
-                        `Reading chunk ${i} of ${totalChunks} • ${Math.round((i - 1) / totalChunks * 100)}%`
-                    );
-
-                    let blob;
-                    try {
-                        if (/^data:/i.test(source)) {
-                            const comma = source.indexOf(',');
-                            if (comma < 0) throw new Error('Invalid data URL');
-                            const header = source.slice(0, comma);
-                            const body = source.slice(comma + 1);
-                            const typeMatch = header.match(/^data:([^;,]+)/i);
-                            const type = (typeMatch && typeMatch[1]) || mimeType;
-                            if (/;base64/i.test(header)) {
-                                const binary = atob(body);
-                                const bytes = new Uint8Array(binary.length);
-                                for (let j = 0; j < binary.length; j++) bytes[j] = binary.charCodeAt(j);
-                                blob = new Blob([bytes], {type});
-                            } else {
-                                blob = new Blob([decodeURIComponent(body)], {type});
-                            }
-                        } else if (/^https?:\/\//i.test(source)) {
-                            const response = await fetch(source);
-                            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                            blob = await response.blob();
-                        } else {
-                            // Older uploads stored plain Base64 without a data: prefix.
-                            const clean = source.replace(/^base64,/, '');
-                            const binary = atob(clean);
-                            const bytes = new Uint8Array(binary.length);
-                            for (let j = 0; j < binary.length; j++) bytes[j] = binary.charCodeAt(j);
-                            blob = new Blob([bytes], {type: mimeType});
-                        }
-                    } catch (chunkErr) {
-                        throw new Error(`Could not read chunk ${i}/${totalChunks}: ${chunkErr.message}`);
-                    }
-
-                    parts.push(blob);
-                    const pct = Math.round((i / totalChunks) * 85);
-                    setLoadStatus(
-                        `Loaded video chunks (${i}/${totalChunks})`,
-                        pct,
-                        `Chunk ${i} of ${totalChunks} loaded • ${pct}% of chunks complete`
-                    );
-                }
-
-                setLoadStatus('Combining video chunks...', 90, `Combining ${totalChunks} chunks into one playable video`);
-                const combinedBlob = new Blob(parts, {type: mimeType});
-                currentVideoDownloadBlob = combinedBlob;
-                const objectUrl = URL.createObjectURL(combinedBlob);
-                currentVideoDownloadUrl = objectUrl;
-                videoPlayer.src = objectUrl;
-
-                setLoadStatus('Checking video playback...', 95, 'All chunks loaded • waiting for the browser to decode the video');
-                await new Promise((resolve, reject) => {
-                    let done = false;
-                    const cleanup = () => {
-                        videoPlayer.removeEventListener('loadedmetadata', ok);
-                        videoPlayer.removeEventListener('canplay', ok);
-                        videoPlayer.removeEventListener('error', bad);
-                    };
-                    const ok = () => { if (!done) { done = true; cleanup(); resolve(); } };
-                    const bad = () => { if (!done) { done = true; cleanup(); reject(new Error('All chunks loaded, but the browser could not decode the combined video. Try an MP4 video.')); } };
-                    videoPlayer.addEventListener('loadedmetadata', ok);
-                    videoPlayer.addEventListener('canplay', ok);
-                    videoPlayer.addEventListener('error', bad);
-                    setTimeout(() => {
-                        if (!done && videoPlayer.readyState >= 1) ok();
-                    }, 15000);
-                });
-
-                setLoadStatus(
-                    `Video ready — ${totalChunks}/${totalChunks} chunks loaded`,
-                    100,
-                    `All ${totalChunks} chunks loaded successfully • ${mimeType}`
-                );
-                setDownloadState(true);
-            }
-
-            setTimeout(() => loadingOverlay.classList.add('hidden'), 700);
-            videoPlayer.play().catch(() => {});
-
-            renderCommentInputSection();
-            loadComments(videoId);
-            } catch (err) {
-                console.error('watchVideo error:', err);
-                loadingOverlay.classList.remove('hidden');
-                loadingFill.style.width = '100%';
-                loadingText.innerText = 'Video failed to load';
-                if (loadingDetails) loadingDetails.innerText = err.message || 'Unknown video loading error';
-            }
-        }
-
-        function renderCommentInputSection() {
-            const container = document.getElementById('commentInputArea');
-            if(!loggedInUser || !userChannelKey) {
-                container.innerHTML = `<p style="color: #666; font-size: 14px;">Please <a href="#" onclick="switchView('authView')" style="color:#0066cc; font-weight:bold;">log in and setup your channel</a> to post comments.</p>`;
-                return;
-            }
-            container.innerHTML = `
-                <textarea id="commentText" placeholder="Add a public comment as your channel..."></textarea>
-                <button onclick="postComment()">Post Comment</button>
-            `;
-        }
-
-        window.postComment = async function() {
-            if(!loggedInUser || !userChannelKey) {
-                alert("You must be logged in with an active channel profile to post comments.");
-                switchView('authView');
-                return;
-            }
-
-            const chanSnap = await get(child(ref(database), `channels/${userChannelKey}`));
-            const authorName = (chanSnap.exists() && chanSnap.val().name) ? chanSnap.val().name : "Creator";
-            const text = document.getElementById('commentText').value.trim();
-            if(!text || !activeVideoId) return;
-
-            const newComRef = push(ref(database, `comments/${activeVideoId}`));
-            await set(newComRef, { user: authorName, channelKey: userChannelKey, text, createdAt: Date.now() });
-            document.getElementById('commentText').value = "";
-        }
-
-        function loadComments(videoId) {
-            const list = document.getElementById('commentsList');
-            onChildAdded(ref(database, `comments/${videoId}`), (snap) => {
-                const c = snap.val();
-                const div = document.createElement('div');
-                div.style.borderBottom = "1px solid #eee";
-                div.style.padding = "8px 0";
-                div.innerHTML = `<strong style="cursor:pointer; color:#0066cc;" onclick="openChannelPage('${c.channelKey || ''}', '${escapeHtml(c.user)}')">${escapeHtml(c.user)}</strong>: ${escapeHtml(c.text)}`;
-                list.prepend(div);
+                const tSpan = document.createElement('span'); tSpan.textContent = meta.title; titleDiv.appendChild(tSpan);
+                const creatorDiv = document.createElement('div'); creatorDiv.className = "card-creator";
+                creatorDiv.textContent = meta.creator;
+
+                detailsDiv.appendChild(titleDiv); detailsDiv.appendChild(creatorDiv);
+                card.appendChild(previewDiv); card.appendChild(detailsDiv); grid.appendChild(card);
             });
         }
 
-        function escapeHtml(str) {
-            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        function filterVideos() {
+            const query = document.getElementById('search').value.toLowerCase();
+            const box = document.getElementById('results');
+            box.innerHTML = "";
+            if (!query) { box.style.display = "none"; return; }
+            const matches = serverVideos.filter(video => getCleanName(video).toLowerCase().includes(query));
+            if (matches.length > 0) {
+                box.style.display = "block";
+                matches.forEach(video => {
+                    const meta = parseVideoMeta(video);
+                    const div = document.createElement('div');
+                    div.textContent = meta.creator !== "Unknown Creator" ? `${meta.title} (by ${meta.creator})` : meta.title;
+                    div.onclick = () => { selectVideo(video); box.style.display = "none"; };
+                    box.appendChild(div);
+                });
+            } else { box.style.display = "none"; }
         }
+
+        function resetPlayer() {
+            const player = document.getElementById('player');
+            player.removeAttribute('src'); player.load(); 
+            document.getElementById('videoWrapper').style.display = "none";
+            document.getElementById('search').value = "";
+            document.getElementById('status').textContent = `Successfully synced! (${serverVideos.length} videos found)`;
+            document.getElementById('downloadBtn').style.display = "none";
+            document.getElementById('loopBtn').style.display = "none";
+            document.getElementById('resetBtn').style.display = "none";
+            showRandomVideos(); 
+        }
+
+        function openAboutModal() { document.getElementById('aboutModal').classList.add('open'); }
+        function closeAboutModal(e) { if (e.target.id === 'aboutModal') document.getElementById('aboutModal').classList.remove('open'); }
+
+        document.addEventListener('click', (e) => { if (e.target.id !== 'search') document.getElementById('results').style.display = "none"; });
+        fetchVideoList();
     </script>
 </body>
 </html>
